@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Zass.App/Zass.App.csproj" />
+  <Project Path="Zass.Core/Zass.Core.csproj" />
+  <Project Path="Zass.Interop/Zass.Interop.csproj" />
+  <Project Path="Zass.Tests/Zass.Tests.csproj" />
+</Solution>
