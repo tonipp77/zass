@@ -12,6 +12,7 @@ En la carpeta `/docs` están las especificaciones completas. **Léelas antes de 
 
 - `docs/Zass-PRD.md` — requisitos funcionales, criterios de aceptación, casos límite.
 - `docs/Zass-Arquitectura-Tecnica.md` — decisiones técnicas, modelo de objetos, estructura.
+- `docs/Zass-Plan-Incremental.md` — **mapa de ejecución**: orden de incrementos y su estado. Consúltalo al inicio de cada sesión, retoma por el primer incremento no completado y actualiza su estado al terminar.
 
 Si algo en una petición contradice estos documentos, señálalo antes de implementarlo; no lo resuelvas en silencio.
 
