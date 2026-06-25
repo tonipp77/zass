@@ -65,7 +65,12 @@ Tras cada cambio significativo, **compila** y resuelve los errores antes de cont
 - Trabaja en incrementos pequeños y compilables. No generes el proyecto entero de golpe.
 - **Tú no puedes ver la pantalla.** No puedes verificar la captura, la nitidez DPI, el resultado del portapapeles ni el comportamiento del atajo. Implementa, compila, y al terminar una tarea entrégame una **lista de verificación manual** con los pasos exactos que debo ejecutar yo para validar lo que tú no puedes.
 - Para decisiones de diseño no cubiertas por los documentos, pregúntame antes en lugar de asumir.
-- Usa Git: commits pequeños y descriptivos por incremento.
+- **Regla de commits/subida (innegociable):** no se hace commit ni se sube nada a la rama `dev`
+  hasta que **yo confirme** que el incremento funciona bien tras ejecutar su plan de pruebas
+  (tests automáticos + lista de verificación manual cuando aplique). El flujo es:
+  implementar → compilar → entregar plan de pruebas → **esperar mi confirmación** → recién
+  entonces commit (pequeño y descriptivo por incremento) y, si procede, push a `dev`.
+  Mientras tanto, el trabajo queda en el árbol de trabajo, sin commit.
 
 ## Errores típicos a evitar
 

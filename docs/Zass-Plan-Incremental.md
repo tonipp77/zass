@@ -25,6 +25,9 @@ usuario manualmente**, porque el desarrollador IA no ve la pantalla. Por eso:
 - Los incrementos se entregan **de uno en uno**, compilando antes de continuar.
 - Cada incremento con efecto visible termina con una **lista de verificación manual** para el usuario.
 - No se apila el siguiente incremento hasta que el usuario valida el anterior.
+- **No se hace commit ni se sube nada a `dev` hasta que el usuario confirme** que el incremento
+  pasa su plan de pruebas. Hasta esa confirmación el código permanece en el árbol de trabajo
+  (sin commit). Un incremento solo pasa a ✅ tras la validación del usuario; antes está 🔄.
 
 ---
 
@@ -38,17 +41,30 @@ píxeles físicos) → overlay congelado → selección → copia al portapapele
 aislada, manifiesto Per-Monitor DPI Aware v2, tests de `SelectionGeometry`.
 **Estado:** Completado y validado por el usuario.
 
-### ⬜ Incremento 1 — Núcleo de anotaciones + undo/redo (`Zass.Core`)
+### ✅ Incremento 1 — Núcleo de anotaciones + undo/redo (`Zass.Core`)
 Modelo de objetos vectoriales (`Annotation` y subclases), `IUndoableCommand`,
 `UndoRedoManager` (dos pilas), comandos `Add/Remove/Move`. **Sin UI, con tests unitarios.**
 - **Cubre:** RF-11, RF-12 · Arquitectura §6, §7
 - **Por qué primero:** es el corazón del diferenciador, es C# puro testeable sin verificación
   visual, y desbloquea todo lo demás.
+- **Estado:** Completado y validado por el usuario (28 tests unitarios en verde).
+- **Nota de diseño:** `Render()` (Arquitectura §6.1) se omite deliberadamente del modelo
+  para mantener `Zass.Core` libre de WPF (restricción de CLAUDE.md). La materialización a
+  `UIElement` vivirá en la capa de presentación (`Zass.App`) en el Incremento 3. El color se
+  modela con `ArgbColor` (UI-agnóstico) y los puntos con `PhysicalPoint` (píxeles físicos).
 
-### ⬜ Incremento 2 — Capa de selección completa en el overlay
+### ✅ Incremento 2 — Capa de selección completa en el overlay
 Redimensionado y reposicionado de la selección con 8 tiradores, capa de oscurecimiento
 ("agujero"), indicador de dimensiones en píxeles durante dibujo/redimensionado.
 - **Cubre:** RF-4, RF-6 · PRD §6 · Arquitectura §5.2
+- **Estado:** Completado y validado por el usuario (pruebas en pantalla a 100% y 150% OK).
+- **Notas de diseño:**
+  - Lógica de manipulación extraída a `Zass.Core.Capture.SelectionManipulator` (puro,
+    píxeles físicos, 22 tests): hit-test de los 8 tiradores, `Resize` (borde opuesto fijo,
+    clamp a monitor, tamaño mínimo, **sin volteo** en v1) y `Move` (clamp de posición).
+  - Cambio de flujo respecto al Incremento 0: al soltar el ratón la selección **ya no se
+    copia automáticamente**; queda editable (tiradores/mover) y se confirma con **Enter**.
+    Esc cancela. Esto da margen al futuro toolbar de anotaciones (Incrementos 3+).
 
 ### ⬜ Incremento 3 — Barra de herramientas + primera herramienta (rectángulo)
 Barra flotante anclada a la selección con indicación de herramienta activa; primera
