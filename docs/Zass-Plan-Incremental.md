@@ -66,11 +66,29 @@ Redimensionado y reposicionado de la selección con 8 tiradores, capa de oscurec
     copia automáticamente**; queda editable (tiradores/mover) y se confirma con **Enter**.
     Esc cancela. Esto da margen al futuro toolbar de anotaciones (Incrementos 3+).
 
-### ⬜ Incremento 3 — Barra de herramientas + primera herramienta (rectángulo)
+### ✅ Incremento 3 — Barra de herramientas + primera herramienta (rectángulo)
 Barra flotante anclada a la selección con indicación de herramienta activa; primera
 herramienta de dibujo (rectángulo contorno) enganchada al ciclo herramienta→comando→canvas.
 - **Cubre:** RF-8 (parcial) · PRD §6 · Arquitectura §6
 - **Por qué la más simple:** valida el patrón completo de extremo a extremo con bajo riesgo.
+- **Estado:** Completado y validado por el usuario (pruebas en pantalla a 100% y 150% OK).
+- **Notas de diseño / alcance:**
+  - Nueva capa `AnnotationCanvas` entre el oscurecimiento y el cromo de selección, para que
+    las anotaciones se vean a brillo pleno. `AnnotationCanvasController` (presentación)
+    materializa el modelo de `Zass.Core` a `Shape` de WPF y enruta undo/redo.
+  - Barra con **dos** herramientas funcionales: Puntero (editar selección) y Rectángulo
+    (contorno), con indicación de herramienta activa. El resto de herramientas del PRD §6
+    (texto, flecha, relleno, libre, color/grosor, copiar/guardar) llegan en Incrementos 4–6.
+  - Color/grosor por defecto fijos (rojo, 3 px físicos); su UI llega en el Incremento 5.
+  - Atajos: V = puntero, R = rectángulo, Ctrl+Z/Ctrl+Y = deshacer/rehacer, Ctrl+C/Enter =
+    copiar, Esc = cancelar. Borrar anotación seleccionada se difiere (requiere selección de
+    anotaciones con el puntero, en un incremento posterior).
+  - **Composición de exportación traída adelante (parcial del Incremento 6):** la copia al
+    portapapeles ahora compone fondo recortado + anotaciones dentro de la selección,
+    excluyendo capas auxiliares. La fidelidad píxel a píxel formal y el guardado a disco
+    siguen siendo del Incremento 6.
+  - **Decisión confirmada por el usuario:** las anotaciones mantienen **posición absoluta**
+    (Arquitectura §15); al mover la selección con el puntero no la acompañan.
 
 ### ⬜ Incremento 4 — Resto de herramientas de dibujo + texto
 Flecha, rectángulo relleno, dibujo libre (un solo trazo = un solo comando) y, al final por su

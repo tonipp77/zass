@@ -76,4 +76,10 @@
   <data name="CaptureErrorMessage" xml:space="preserve">
     <value>The screen capture could not be completed.</value>
   </data>
+  <data name="ToolPointer" xml:space="preserve">
+    <value>Select / move (V)</value>
+  </data>
+  <data name="ToolRectangle" xml:space="preserve">
+    <value>Rectangle (R)</value>
+  </data>
 </root>

@@ -12,15 +12,48 @@
         SnapsToDevicePixels="True"
         UseLayoutRounding="False">
 
+    <Window.Resources>
+        <!-- Floating toolbar tool button: flat, with hover and active (checked) states. -->
+        <Style x:Key="ToolButtonStyle" TargetType="ToggleButton">
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Cursor" Value="Arrow" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Bd" CornerRadius="4" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#33FFFFFF" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#FF3C8DE5" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
     <Grid>
         <!-- Layer 1: frozen monitor capture at full brightness -->
         <Image x:Name="BackgroundImage" Stretch="Fill"
                RenderOptions.BitmapScalingMode="NearestNeighbor" />
 
-        <!-- Layers 2-3: dimming with a "hole" over the selection + selection border -->
-        <Canvas x:Name="OverlayCanvas" ClipToBounds="True">
+        <!-- Layer 2: dimming with a "hole" over the selection -->
+        <Canvas x:Name="DimCanvas" ClipToBounds="True">
             <Path x:Name="DimPath" Fill="#80000000" />
+        </Canvas>
 
+        <!-- Layer 3: live vector annotations (above the dim, at full brightness) -->
+        <Canvas x:Name="AnnotationCanvas" ClipToBounds="True" />
+
+        <!-- Layer 4: selection chrome (border, handles, dimensions) + floating toolbar -->
+        <Canvas x:Name="ChromeCanvas" ClipToBounds="True">
             <Rectangle x:Name="SelectionBorder"
                        Stroke="#FF3C8DE5" StrokeThickness="1"
                        Visibility="Collapsed" />
@@ -30,6 +63,23 @@
                     Padding="6,2" Visibility="Collapsed">
                 <TextBlock x:Name="DimensionText"
                            Foreground="White" FontSize="12" FontFamily="Segoe UI" />
+            </Border>
+
+            <Border x:Name="Toolbar" Visibility="Collapsed"
+                    Background="#E6202020" CornerRadius="6" Padding="4"
+                    BorderBrush="#40FFFFFF" BorderThickness="1"
+                    MouseLeftButtonDown="OnToolbarMouseDown">
+                <StackPanel Orientation="Horizontal">
+                    <ToggleButton x:Name="PointerToolButton" Style="{StaticResource ToolButtonStyle}"
+                                  Focusable="False" Click="OnPointerToolClick">
+                        <Path Data="M 0,0 L 0,16 L 4,12 L 7,18 L 9,17 L 6,11 L 11,11 Z"
+                              Fill="White" Stretch="Uniform" Width="14" Height="16" />
+                    </ToggleButton>
+                    <ToggleButton x:Name="RectangleToolButton" Style="{StaticResource ToolButtonStyle}"
+                                  Focusable="False" Margin="2,0,0,0" Click="OnRectangleToolClick">
+                        <Rectangle Width="16" Height="12" Stroke="White" StrokeThickness="1.5" Fill="Transparent" />
+                    </ToggleButton>
+                </StackPanel>
             </Border>
         </Canvas>
     </Grid>
