@@ -50,14 +50,14 @@ public partial class OverlayWindow : Window
 
     private OverlayTool _tool = OverlayTool.Pointer;
 
-    // Default annotation style; a color/thickness picker arrives in Increment 5.
+    // Default annotation style; a color/thickness/size picker arrives in Increment 5.
     private ArgbColor _currentColor = ArgbColor.Red;
     private double _currentThickness = 3.0;
+    private double _currentTextSize = 18.0;
 
     private DragMode _mode;
     private SelectionHandle _activeHandle;
     private (int X, int Y) _dragStart;
-    private (int X, int Y) _annoStart;
     private (int X, int Y) _lastPhysical;
     private PhysicalRect _selection;
     private bool _hasSelection;
@@ -74,9 +74,14 @@ public partial class OverlayWindow : Window
         CreateHandles();
 
         _annotations = new AnnotationCanvasController(AnnotationCanvas, PhysicalPointToDip, _scaleX);
+        _annotations.TextEditCompleted += () => Keyboard.Focus(this);
 
         PointerToolButton.ToolTip = Strings.ToolPointer;
+        TextToolButton.ToolTip = Strings.ToolText;
+        ArrowToolButton.ToolTip = Strings.ToolArrow;
         RectangleToolButton.ToolTip = Strings.ToolRectangle;
+        FilledRectangleToolButton.ToolTip = Strings.ToolFilledRectangle;
+        FreehandToolButton.ToolTip = Strings.ToolFreehand;
         PointerToolButton.IsChecked = true;
 
         SourceInitialized += OnSourceInitialized;
@@ -127,14 +132,29 @@ public partial class OverlayWindow : Window
 
     private void OnPointerToolClick(object sender, RoutedEventArgs e) => SetTool(OverlayTool.Pointer);
 
+    private void OnTextToolClick(object sender, RoutedEventArgs e) => SetTool(OverlayTool.Text);
+
+    private void OnArrowToolClick(object sender, RoutedEventArgs e) => SetTool(OverlayTool.Arrow);
+
     private void OnRectangleToolClick(object sender, RoutedEventArgs e) => SetTool(OverlayTool.Rectangle);
+
+    private void OnFilledRectangleToolClick(object sender, RoutedEventArgs e) => SetTool(OverlayTool.FilledRectangle);
+
+    private void OnFreehandToolClick(object sender, RoutedEventArgs e) => SetTool(OverlayTool.Freehand);
+
+    private static bool IsDrawingTool(OverlayTool tool) => tool is
+        OverlayTool.Rectangle or OverlayTool.FilledRectangle or OverlayTool.Arrow or OverlayTool.Freehand;
 
     private void SetTool(OverlayTool tool)
     {
         _tool = tool;
         PointerToolButton.IsChecked = tool == OverlayTool.Pointer;
+        TextToolButton.IsChecked = tool == OverlayTool.Text;
+        ArrowToolButton.IsChecked = tool == OverlayTool.Arrow;
         RectangleToolButton.IsChecked = tool == OverlayTool.Rectangle;
-        Cursor = tool == OverlayTool.Rectangle ? Cursors.Cross : Cursors.Arrow;
+        FilledRectangleToolButton.IsChecked = tool == OverlayTool.FilledRectangle;
+        FreehandToolButton.IsChecked = tool == OverlayTool.Freehand;
+        Cursor = tool == OverlayTool.Pointer ? Cursors.Arrow : Cursors.Cross;
 
         // Keep keyboard focus on the window so Enter/Ctrl+C/Esc keep working after a
         // toolbar click (the buttons are non-focusable, this is belt-and-braces).
@@ -152,6 +172,14 @@ public partial class OverlayWindow : Window
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
     {
         base.OnMouseLeftButtonDown(e);
+
+        // A click anywhere while typing confirms the current text and consumes the click.
+        if (_annotations.IsEditingText)
+        {
+            _annotations.CommitText();
+            return;
+        }
+
         (int px, int py) = DipToPhysical(e.GetPosition(this));
 
         // Until there is a selection, any drag rubber-bands a new selection.
@@ -161,10 +189,18 @@ public partial class OverlayWindow : Window
             return;
         }
 
-        if (_tool == OverlayTool.Rectangle)
+        if (_tool == OverlayTool.Text)
+        {
+            (int tx, int ty) = ClampToBounds(px, py);
+            _annotations.BeginText(new PhysicalPoint(tx, ty), _currentColor, _currentTextSize);
+            return;
+        }
+
+        if (IsDrawingTool(_tool))
         {
             _mode = DragMode.DrawingAnnotation;
-            _annoStart = ClampToBounds(px, py);
+            (int sx, int sy) = ClampToBounds(px, py);
+            _annotations.BeginDraft(_tool, new PhysicalPoint(sx, sy), _currentColor, _currentThickness);
             CaptureMouse();
             return;
         }
@@ -229,8 +265,7 @@ public partial class OverlayWindow : Window
 
             case DragMode.DrawingAnnotation:
                 (int cx, int cy) = ClampToBounds(px, py);
-                PhysicalRect preview = SelectionGeometry.Normalize(_annoStart.X, _annoStart.Y, cx, cy);
-                _annotations.ShowRectanglePreview(preview, _currentColor, _currentThickness);
+                _annotations.UpdateDraft(new PhysicalPoint(cx, cy));
                 break;
 
             default:
@@ -263,11 +298,8 @@ public partial class OverlayWindow : Window
             case DragMode.DrawingAnnotation:
                 (int upX, int upY) = DipToPhysical(e.GetPosition(this));
                 (int cx, int cy) = ClampToBounds(upX, upY);
-                _annotations.CommitRectangle(
-                    new PhysicalPoint(_annoStart.X, _annoStart.Y),
-                    new PhysicalPoint(cx, cy),
-                    _currentColor,
-                    _currentThickness);
+                _annotations.UpdateDraft(new PhysicalPoint(cx, cy));
+                _annotations.CommitDraft();
                 break;
         }
 
@@ -277,6 +309,14 @@ public partial class OverlayWindow : Window
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
+
+        // While the inline text editor has focus, let it own every keystroke: typing
+        // must not trigger single-key tool shortcuts (RF-13). Enter/Esc are confirmed
+        // by the editor itself (which marks them handled before they reach here).
+        if (_annotations.IsEditingText)
+        {
+            return;
+        }
 
         bool ctrl = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
         if (ctrl)
@@ -319,8 +359,20 @@ public partial class OverlayWindow : Window
             case Key.V:
                 SetTool(OverlayTool.Pointer);
                 break;
+            case Key.T:
+                SetTool(OverlayTool.Text);
+                break;
+            case Key.A:
+                SetTool(OverlayTool.Arrow);
+                break;
             case Key.R:
                 SetTool(OverlayTool.Rectangle);
+                break;
+            case Key.F:
+                SetTool(OverlayTool.FilledRectangle);
+                break;
+            case Key.D:
+                SetTool(OverlayTool.Freehand);
                 break;
         }
     }
@@ -458,7 +510,7 @@ public partial class OverlayWindow : Window
 
     private void UpdateCursor(int px, int py)
     {
-        if (_tool == OverlayTool.Rectangle)
+        if (_tool != OverlayTool.Pointer)
         {
             Cursor = Cursors.Cross;
             return;
@@ -486,6 +538,8 @@ public partial class OverlayWindow : Window
 
     private void ConfirmAndCopy()
     {
+        // Flush any text still being typed so it lands in the exported image.
+        _annotations.CommitText();
         var bmp = ComposeForExport();
         CopyToClipboardWithRetry(bmp);
         Close();

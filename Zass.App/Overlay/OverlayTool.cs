@@ -1,12 +1,17 @@
 namespace Zass.App.Overlay;
 
 /// <summary>
-/// The active overlay tool. Increment 3 wires up <see cref="Pointer"/> (edit the
-/// selection) and <see cref="Rectangle"/> (draw an outline rectangle annotation);
-/// the remaining tools arrive in later increments.
+/// The active overlay tool. <see cref="Pointer"/> edits the selection; the
+/// remaining values draw vector annotations. <see cref="Rectangle"/> arrived in
+/// Increment 3; <see cref="Arrow"/>, <see cref="FilledRectangle"/>,
+/// <see cref="Freehand"/> and <see cref="Text"/> in Increment 4.
 /// </summary>
 internal enum OverlayTool
 {
     Pointer,
+    Text,
+    Arrow,
     Rectangle,
+    FilledRectangle,
+    Freehand,
 }

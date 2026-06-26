@@ -23,5 +23,9 @@ internal static class Strings
     public static string HotkeyConflictMessage => Get(nameof(HotkeyConflictMessage));
     public static string CaptureErrorMessage => Get(nameof(CaptureErrorMessage));
     public static string ToolPointer => Get(nameof(ToolPointer));
+    public static string ToolText => Get(nameof(ToolText));
+    public static string ToolArrow => Get(nameof(ToolArrow));
     public static string ToolRectangle => Get(nameof(ToolRectangle));
+    public static string ToolFilledRectangle => Get(nameof(ToolFilledRectangle));
+    public static string ToolFreehand => Get(nameof(ToolFreehand));
 }

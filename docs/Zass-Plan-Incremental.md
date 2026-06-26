@@ -90,11 +90,39 @@ herramienta de dibujo (rectángulo contorno) enganchada al ciclo herramienta→c
   - **Decisión confirmada por el usuario:** las anotaciones mantienen **posición absoluta**
     (Arquitectura §15); al mover la selección con el puntero no la acompañan.
 
-### ⬜ Incremento 4 — Resto de herramientas de dibujo + texto
+### ✅ Incremento 4 — Resto de herramientas de dibujo + texto
 Flecha, rectángulo relleno, dibujo libre (un solo trazo = un solo comando) y, al final por su
 delicadeza, **texto** con gestión de foco (escritura vs. atajos de herramienta).
 - **Cubre:** RF-8, RF-13 · Arquitectura §6.3
 - **Riesgo:** solapamiento teclas-herramienta durante la edición de texto.
+- **Estado:** Completado y validado por el usuario (compila sin avisos; 62 tests en verde).
+- **Notas de diseño / alcance:**
+  - El modelo de estas anotaciones ya existía desde el Incremento 1; este incremento es
+    **solo capa de presentación**: barra ampliada, dibujo en vivo y materialización a WPF.
+  - `AnnotationCanvasController` pasa a un **flujo de borrador unificado** (`BeginDraft` /
+    `UpdateDraft` / `CommitDraft`): el objeto que se previsualiza durante el arrastre es el
+    mismo que se confirma, evitando geometría duplicada. Sustituye al par
+    `ShowRectanglePreview`/`CommitRectangle` del Incremento 3. El diccionario interno pasa de
+    `Shape` a `FrameworkElement` para alojar también `TextBlock` (texto) y `Path` (flecha).
+  - Materialización: rectángulo contorno y relleno → `Rectangle`; flecha → `Path` (asta + dos
+    barbas, cabeza proporcional al grosor); dibujo libre → `Polyline` (un punto cada ≥1,5 px
+    físicos); texto → `TextBlock`.
+  - **Dibujo libre = un solo comando:** el trazo entero es un único `FreehandAnnotation` y un
+    único `AddAnnotationCommand` (Arquitectura §7.2). Un Ctrl+Z deshace el trazo completo.
+  - **Texto con gestión de foco (Arquitectura §6.3, RF-13):** clic para colocar un `TextBox`
+    en línea; mientras tiene el foco, la ventana ignora todas las teclas (las alfanuméricas
+    escriben, no activan herramientas). **Enter** o **Esc** confirman el texto como objeto
+    (Esc no cierra el overlay mientras se escribe); un clic fuera también confirma. Texto vacío
+    se descarta. Al confirmar, el foco de teclado vuelve a la ventana.
+  - **Limitación conocida:** durante la edición de texto, los atajos con modificador
+    (Ctrl+Z/Y/C/S) los gestiona el `TextBox` (su propio undo/copiar), no la ventana. La
+    operatividad de Ctrl+… a nivel de ventana durante la edición (Arquitectura §6.3) se puede
+    afinar más adelante; el comportamiento actual es seguro y no rompe la escritura.
+  - **Atajos añadidos:** T = texto, A = flecha, F = rectángulo relleno, D = dibujo libre
+    (V = puntero y R = rectángulo ya existían).
+  - **Color/grosor/tamaño** siguen fijos por defecto (rojo, 3 px de trazo, 18 px de texto);
+    su UI llega en el Incremento 5. La **selección/movimiento/borrado de anotaciones** con el
+    puntero (RF-11 en presentación) sigue diferida a un incremento posterior.
 
 ### ⬜ Incremento 5 — Color y grosor
 Paleta rápida + selector de color completo; grosor de trazo y tamaño de texto. Persistencia

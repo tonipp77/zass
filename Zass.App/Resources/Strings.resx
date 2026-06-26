@@ -79,7 +79,19 @@
   <data name="ToolPointer" xml:space="preserve">
     <value>Select / move (V)</value>
   </data>
+  <data name="ToolText" xml:space="preserve">
+    <value>Text (T)</value>
+  </data>
+  <data name="ToolArrow" xml:space="preserve">
+    <value>Arrow (A)</value>
+  </data>
   <data name="ToolRectangle" xml:space="preserve">
     <value>Rectangle (R)</value>
+  </data>
+  <data name="ToolFilledRectangle" xml:space="preserve">
+    <value>Filled rectangle (F)</value>
+  </data>
+  <data name="ToolFreehand" xml:space="preserve">
+    <value>Freehand (D)</value>
   </data>
 </root>
