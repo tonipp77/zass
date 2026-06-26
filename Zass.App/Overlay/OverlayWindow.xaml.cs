@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows;
@@ -62,6 +63,9 @@ public partial class OverlayWindow : Window
     private PhysicalRect _selection;
     private bool _hasSelection;
 
+    // Guards the color popup against the closing click immediately reopening it.
+    private bool _suppressColorReopen;
+
     public OverlayWindow(CapturedImage capture)
     {
         _capture = capture;
@@ -83,6 +87,8 @@ public partial class OverlayWindow : Window
         FilledRectangleToolButton.ToolTip = Strings.ToolFilledRectangle;
         FreehandToolButton.ToolTip = Strings.ToolFreehand;
         PointerToolButton.IsChecked = true;
+
+        InitializeToolOptions();
 
         SourceInitialized += OnSourceInitialized;
         Loaded += OnLoaded;
@@ -156,6 +162,14 @@ public partial class OverlayWindow : Window
         FreehandToolButton.IsChecked = tool == OverlayTool.Freehand;
         Cursor = tool == OverlayTool.Pointer ? Cursors.Arrow : Cursors.Cross;
 
+        UpdateToolOptions();
+
+        // The toolbar width changes with the visible options, so re-anchor it.
+        if (_hasSelection)
+        {
+            UpdateVisuals();
+        }
+
         // Keep keyboard focus on the window so Enter/Ctrl+C/Esc keep working after a
         // toolbar click (the buttons are non-focusable, this is belt-and-braces).
         Keyboard.Focus(this);
@@ -167,11 +181,105 @@ public partial class OverlayWindow : Window
         e.Handled = true;
     }
 
+    // --- Color / thickness / size options ---
+
+    private void InitializeToolOptions()
+    {
+        ColorButton.ToolTip = Strings.ColorPicker;
+        ThicknessLabel.Text = Strings.LabelThickness;
+        TextSizeLabel.Text = Strings.LabelTextSize;
+
+        ColorPickerControl.SelectedColor = ToMediaColor(_currentColor);
+        ColorSwatch.Background = new SolidColorBrush(ToMediaColor(_currentColor));
+        ColorPickerControl.SelectedColorChanged += OnPickerColorChanged;
+        ColorPickerControl.ColorCommitted += (_, _) => ColorPopup.IsOpen = false;
+
+        // Slider values match the XAML defaults, so ValueChanged won't fire here:
+        // seed the value captions explicitly.
+        ThicknessValue.Text = FormatValue(_currentThickness);
+        TextSizeValue.Text = FormatValue(_currentTextSize);
+
+        UpdateToolOptions();
+    }
+
+    private void UpdateToolOptions()
+    {
+        bool usesColor = _tool != OverlayTool.Pointer;
+        bool usesStroke = _tool is OverlayTool.Arrow or OverlayTool.Rectangle or OverlayTool.Freehand;
+        bool isText = _tool == OverlayTool.Text;
+
+        OptionsSeparator.Visibility = usesColor ? Visibility.Visible : Visibility.Collapsed;
+        ColorButton.Visibility = usesColor ? Visibility.Visible : Visibility.Collapsed;
+        ThicknessPanel.Visibility = usesStroke ? Visibility.Visible : Visibility.Collapsed;
+        TextSizePanel.Visibility = isText ? Visibility.Visible : Visibility.Collapsed;
+
+        if (!usesColor && ColorPopup.IsOpen)
+        {
+            ColorPopup.IsOpen = false;
+        }
+    }
+
+    private void OnColorButtonClick(object sender, RoutedEventArgs e)
+    {
+        // When the popup is open, the click first closes it (StaysOpen=False); the
+        // suppression flag stops this same click from immediately reopening it.
+        if (!_suppressColorReopen)
+        {
+            ColorPopup.IsOpen = true;
+        }
+    }
+
+    private void OnColorPopupClosed(object? sender, EventArgs e)
+    {
+        _suppressColorReopen = true;
+        Dispatcher.BeginInvoke(
+            System.Windows.Threading.DispatcherPriority.Input,
+            new Action(() => _suppressColorReopen = false));
+    }
+
+    private void OnPickerColorChanged(object? sender, EventArgs e)
+    {
+        Color c = ColorPickerControl.SelectedColor;
+        _currentColor = new ArgbColor(c.A, c.R, c.G, c.B);
+        ColorSwatch.Background = new SolidColorBrush(c);
+    }
+
+    private void OnThicknessChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        _currentThickness = e.NewValue;
+        if (ThicknessValue is not null)
+        {
+            ThicknessValue.Text = FormatValue(e.NewValue);
+        }
+    }
+
+    private void OnTextSizeChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        _currentTextSize = e.NewValue;
+        if (TextSizeValue is not null)
+        {
+            TextSizeValue.Text = FormatValue(e.NewValue);
+        }
+    }
+
+    private static string FormatValue(double value) =>
+        ((int)Math.Round(value)).ToString(CultureInfo.InvariantCulture);
+
+    private static Color ToMediaColor(ArgbColor c) => Color.FromArgb(c.A, c.R, c.G, c.B);
+
     // --- Mouse selection / manipulation / drawing ---
 
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
     {
         base.OnMouseLeftButtonDown(e);
+
+        // If this same click just dismissed the open color popup, consume it so it
+        // doesn't also start drawing an annotation. The flag is only set for the one
+        // input cycle in which the popup closed.
+        if (_suppressColorReopen)
+        {
+            return;
+        }
 
         // A click anywhere while typing confirms the current text and consumes the click.
         if (_annotations.IsEditingText)
@@ -318,6 +426,13 @@ public partial class OverlayWindow : Window
             return;
         }
 
+        // A focused text field (e.g. the hex input in the color popup) owns its
+        // keystrokes; single-key tool shortcuts must not fire while typing into it.
+        if (Keyboard.FocusedElement is TextBox)
+        {
+            return;
+        }
+
         bool ctrl = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
         if (ctrl)
         {
@@ -347,7 +462,16 @@ public partial class OverlayWindow : Window
         switch (e.Key)
         {
             case Key.Escape:
-                Close();
+                // Esc dismisses an open color popup first; otherwise it cancels capture.
+                if (ColorPopup.IsOpen)
+                {
+                    ColorPopup.IsOpen = false;
+                }
+                else
+                {
+                    Close();
+                }
+
                 break;
             case Key.Enter:
                 if (_hasSelection && SelectionGeometry.IsValidSize(_selection))

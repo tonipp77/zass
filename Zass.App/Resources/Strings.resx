@@ -94,4 +94,16 @@
   <data name="ToolFreehand" xml:space="preserve">
     <value>Freehand (D)</value>
   </data>
+  <data name="ColorPicker" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="LabelHex" xml:space="preserve">
+    <value>Hex</value>
+  </data>
+  <data name="LabelThickness" xml:space="preserve">
+    <value>Thickness</value>
+  </data>
+  <data name="LabelTextSize" xml:space="preserve">
+    <value>Size</value>
+  </data>
 </root>

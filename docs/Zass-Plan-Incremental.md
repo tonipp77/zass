@@ -124,10 +124,32 @@ delicadeza, **texto** con gestión de foco (escritura vs. atajos de herramienta)
     su UI llega en el Incremento 5. La **selección/movimiento/borrado de anotaciones** con el
     puntero (RF-11 en presentación) sigue diferida a un incremento posterior.
 
-### ⬜ Incremento 5 — Color y grosor
+### ✅ Incremento 5 — Color y grosor
 Paleta rápida + selector de color completo; grosor de trazo y tamaño de texto. Persistencia
 del último valor dentro de la sesión de overlay.
 - **Cubre:** RF-9, RF-10
+- **Estado:** Completado y validado por el usuario (compila sin avisos; 62 tests en verde).
+- **Decisiones confirmadas por el usuario:**
+  - **Selector de color completo = popup WPF propio** (no `ColorDialog` de WinForms): evita
+    añadir WinForms y un diálogo nativo que quedaría detrás del overlay topmost. Control nuevo
+    `ColorPicker` (UserControl): paleta rápida de 12 colores + área saturación/brillo + barra de
+    tono + campo hex. HSV↔RGB propios, cero dependencias nuevas.
+  - **Grosor y tamaño = sliders de rango completo** (1–20 px de trazo; 8–72 de texto), fieles
+    al PRD, con el valor numérico visible.
+- **Notas de diseño / alcance:**
+  - Los controles de opciones se muestran **según la herramienta activa**: color para todas las
+    de dibujo y texto; grosor para flecha/rectángulo/libre (el relleno no tiene trazo); tamaño
+    solo para texto. La barra se reancla al cambiar de ancho.
+  - **Persistencia dentro de la sesión:** `_currentColor`/`_currentThickness`/`_currentTextSize`
+    son campos de la ventana; el último valor se mantiene entre anotaciones hasta cerrar el
+    overlay. La persistencia **entre sesiones** (a `settings.json`) es del Incremento 7.
+  - **Foco de teclado:** el campo hex es un `TextBox`; mientras tiene el foco la ventana ignora
+    los atajos de una tecla (misma regla que el texto en línea del Incremento 4). Esc cierra
+    primero el popup de color; si no hay popup, cancela la captura.
+  - El cambio de color/grosor afecta solo a las **nuevas** anotaciones (no hay anotación
+    seleccionada todavía; la selección/edición de anotaciones con el puntero sigue diferida).
+  - El botón de color es un toggle "manual": un flag de una sola pasada evita que el clic que
+    cierra el popup lo reabra o inicie un dibujo por debajo.
 
 ### ⬜ Incremento 6 — Exportación completa
 Composición con `RenderTargetBitmap` **excluyendo capas auxiliares** (oscurecimiento,

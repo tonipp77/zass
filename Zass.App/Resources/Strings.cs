@@ -28,4 +28,8 @@ internal static class Strings
     public static string ToolRectangle => Get(nameof(ToolRectangle));
     public static string ToolFilledRectangle => Get(nameof(ToolFilledRectangle));
     public static string ToolFreehand => Get(nameof(ToolFreehand));
+    public static string ColorPicker => Get(nameof(ColorPicker));
+    public static string LabelHex => Get(nameof(LabelHex));
+    public static string LabelThickness => Get(nameof(LabelThickness));
+    public static string LabelTextSize => Get(nameof(LabelTextSize));
 }
