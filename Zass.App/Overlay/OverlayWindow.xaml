@@ -161,6 +161,34 @@
                                    Foreground="White" Width="22" TextAlignment="Right" Margin="5,0,0,0" />
                     </StackPanel>
 
+                    <!-- Export actions (always visible): copy, save, cancel -->
+                    <Border x:Name="ActionsSeparator" Width="1" Margin="5,3" Background="#40FFFFFF" />
+
+                    <Button x:Name="CopyButton" Style="{StaticResource ChromeButtonStyle}" Click="OnCopyClick">
+                        <Grid Width="16" Height="16">
+                            <Rectangle Width="9" Height="11" RadiusX="1.5" RadiusY="1.5"
+                                       Stroke="White" StrokeThickness="1.4" Fill="Transparent"
+                                       HorizontalAlignment="Left" VerticalAlignment="Top" />
+                            <Rectangle Width="9" Height="11" RadiusX="1.5" RadiusY="1.5"
+                                       Stroke="White" StrokeThickness="1.4" Fill="#FF202020"
+                                       HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+                        </Grid>
+                    </Button>
+
+                    <Button x:Name="SaveButton" Style="{StaticResource ChromeButtonStyle}" Click="OnSaveClick">
+                        <Path Stroke="White" StrokeThickness="1.5" Fill="Transparent"
+                              StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                              Width="16" Height="16" Stretch="None"
+                              Data="M8,2 L8,10 M4.5,6.5 L8,10.5 L11.5,6.5 M2.5,13 L13.5,13" />
+                    </Button>
+
+                    <Button x:Name="CloseButton" Style="{StaticResource ChromeButtonStyle}" Click="OnCloseClick">
+                        <Path Stroke="White" StrokeThickness="1.6"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                              Width="14" Height="14" Stretch="None"
+                              Data="M2,2 L12,12 M12,2 L2,12" />
+                    </Button>
+
                     <Popup x:Name="ColorPopup" PlacementTarget="{Binding ElementName=ColorButton}"
                            Placement="Bottom" StaysOpen="False" AllowsTransparency="True"
                            HorizontalOffset="-6" VerticalOffset="4" Closed="OnColorPopupClosed">

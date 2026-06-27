@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -13,6 +14,7 @@ using Zass.App.Imaging;
 using Zass.App.Resources;
 using Zass.Core.Annotations;
 using Zass.Core.Capture;
+using Zass.Core.Export;
 using Zass.Interop;
 
 namespace Zass.App.Overlay;
@@ -86,6 +88,9 @@ public partial class OverlayWindow : Window
         RectangleToolButton.ToolTip = Strings.ToolRectangle;
         FilledRectangleToolButton.ToolTip = Strings.ToolFilledRectangle;
         FreehandToolButton.ToolTip = Strings.ToolFreehand;
+        CopyButton.ToolTip = Strings.ToolCopy;
+        SaveButton.ToolTip = Strings.ToolSave;
+        CloseButton.ToolTip = Strings.ToolClose;
         PointerToolButton.IsChecked = true;
 
         InitializeToolOptions();
@@ -454,6 +459,14 @@ public partial class OverlayWindow : Window
 
                     e.Handled = true;
                     return;
+                case Key.S:
+                    if (_hasSelection && SelectionGeometry.IsValidSize(_selection))
+                    {
+                        ConfirmAndSave();
+                    }
+
+                    e.Handled = true;
+                    return;
             }
 
             return;
@@ -660,12 +673,80 @@ public partial class OverlayWindow : Window
 
     // --- Export ---
 
+    private void OnCopyClick(object sender, RoutedEventArgs e)
+    {
+        if (_hasSelection && SelectionGeometry.IsValidSize(_selection))
+        {
+            ConfirmAndCopy();
+        }
+    }
+
+    private void OnSaveClick(object sender, RoutedEventArgs e)
+    {
+        if (_hasSelection && SelectionGeometry.IsValidSize(_selection))
+        {
+            ConfirmAndSave();
+        }
+    }
+
+    private void OnCloseClick(object sender, RoutedEventArgs e) => Close();
+
     private void ConfirmAndCopy()
     {
         // Flush any text still being typed so it lands in the exported image.
         _annotations.CommitText();
         var bmp = ComposeForExport();
         CopyToClipboardWithRetry(bmp);
+        Close();
+    }
+
+    /// <summary>
+    /// Saves the composed image to disk (RF-15, RF-16, RF-17). Shows the system Save
+    /// dialog with a time-stamped default name and PNG/JPG filters; closes the overlay
+    /// only on a successful write. Cancelling or a write error keeps the overlay open.
+    /// </summary>
+    private void ConfirmAndSave()
+    {
+        // Flush any text still being typed so it lands in the exported image.
+        _annotations.CommitText();
+
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = Strings.SaveDialogTitle,
+            FileName = ExportNaming.DefaultFileName(DateTime.Now),
+            DefaultExt = ".png",
+            AddExtension = true,
+            OverwritePrompt = true,
+            Filter = $"{Strings.SaveFilterPng}|*.png|{Strings.SaveFilterJpeg}|*.jpg;*.jpeg",
+        };
+
+        // The overlay is topmost; drop that while the modal dialog is up so it isn't
+        // hidden behind the full-screen overlay, then restore it if the user cancels.
+        bool wasTopmost = Topmost;
+        Topmost = false;
+        bool? confirmed = dialog.ShowDialog(this);
+        Topmost = wasTopmost;
+
+        if (confirmed != true)
+        {
+            return; // Cancelled: keep the overlay open for further editing.
+        }
+
+        try
+        {
+            System.Windows.Media.Imaging.BitmapSource image = ComposeForExport();
+            ImageExporter.Save(image, dialog.FileName, ExportNaming.FormatFromExtension(dialog.FileName));
+        }
+        catch (Exception ex)
+        {
+            // A failed write (permissions, locked file, full disk) must surface, not
+            // crash; keep the overlay open so the user can retry or pick another path.
+            Trace.TraceError($"Zass: save failed: {ex}");
+            MessageBox.Show(this, Strings.SaveErrorMessage, Strings.HotkeyConflictTitle,
+                MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
         Close();
     }
 

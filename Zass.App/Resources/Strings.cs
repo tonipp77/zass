@@ -32,4 +32,11 @@ internal static class Strings
     public static string LabelHex => Get(nameof(LabelHex));
     public static string LabelThickness => Get(nameof(LabelThickness));
     public static string LabelTextSize => Get(nameof(LabelTextSize));
+    public static string ToolCopy => Get(nameof(ToolCopy));
+    public static string ToolSave => Get(nameof(ToolSave));
+    public static string ToolClose => Get(nameof(ToolClose));
+    public static string SaveDialogTitle => Get(nameof(SaveDialogTitle));
+    public static string SaveFilterPng => Get(nameof(SaveFilterPng));
+    public static string SaveFilterJpeg => Get(nameof(SaveFilterJpeg));
+    public static string SaveErrorMessage => Get(nameof(SaveErrorMessage));
 }

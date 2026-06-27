@@ -151,13 +151,32 @@ del último valor dentro de la sesión de overlay.
   - El botón de color es un toggle "manual": un flag de una sola pasada evita que el clic que
     cierra el popup lo reabra o inicie un dibujo por debajo.
 
-### ⬜ Incremento 6 — Exportación completa
+### ✅ Incremento 6 — Exportación completa
 Composición con `RenderTargetBitmap` **excluyendo capas auxiliares** (oscurecimiento,
 tiradores, marcos), recorte a la selección, fidelidad píxel a píxel. Guardar a disco con
 `SaveFileDialog`, PNG/JPG y nombre por defecto con marca temporal.
 - **Cubre:** RF-14, RF-15, RF-16, RF-17 · Arquitectura §8
+- **Estado:** Completado y validado por el usuario (compila sin avisos; 71 tests en verde).
 - **Nota:** el copiar al portapapeles ya existe desde el Incremento 0; aquí se asegura la
   fidelidad y se añade el guardado a disco.
+- **Notas de diseño / alcance:**
+  - **Guardado a disco (RF-15/16/17):** botón Guardar y atajo **Ctrl+S** abren
+    `Microsoft.Win32.SaveFileDialog` (WPF, sin WinForms) con filtros PNG/JPG y nombre por
+    defecto `Zass_yyyy-MM-dd_HHmmss.png`. El overlay baja `Topmost` mientras el diálogo
+    modal está abierto para que no quede oculto tras la pantalla congelada, y lo restaura si
+    el usuario cancela. Solo se cierra el overlay tras una escritura correcta; un error de
+    escritura se notifica por la UI y mantiene el overlay abierto.
+  - **Composición reutilizada:** copiar y guardar comparten `ComposeForExport()` (fondo
+    recortado + anotaciones dentro de la selección, capas auxiliares excluidas por diseño).
+  - **Naming UI-agnóstico testeable:** `Zass.Core.Export.ExportNaming` (nombre por defecto +
+    formato según extensión) vive en `Zass.Core` sin WPF; la codificación PNG/JPG
+    (`PngBitmapEncoder`/`JpegBitmapEncoder`) vive en `Zass.App.Imaging.ImageExporter` para
+    mantener `Zass.Core` libre de WPF (misma decisión que en el Incremento 1).
+  - **Barra completada (PRD §6):** se añadieron los botones **Copiar**, **Guardar** y
+    **Cancelar**, siempre visibles, además de los atajos ya existentes (Ctrl+C/Enter, Esc).
+  - **Calidad JPG** fija en 90 por ahora; su configuración en Ajustes llega en el Incremento 7.
+  - **Gap detectado fuera de alcance:** RF-5 (seleccionar el monitor completo sin arrastrar)
+    no está asignado a ningún incremento del plan; queda pendiente de ubicar (no es de este).
 
 ### ⬜ Incremento 7 — Producto: bandeja, ajustes, i18n y persistencia
 Menú de bandeja completo (Capturar, Ajustes, Acerca de, Salir), pantalla de Ajustes,

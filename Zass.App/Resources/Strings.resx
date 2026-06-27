@@ -106,4 +106,25 @@
   <data name="LabelTextSize" xml:space="preserve">
     <value>Size</value>
   </data>
+  <data name="ToolCopy" xml:space="preserve">
+    <value>Copy to clipboard (Ctrl+C)</value>
+  </data>
+  <data name="ToolSave" xml:space="preserve">
+    <value>Save to file (Ctrl+S)</value>
+  </data>
+  <data name="ToolClose" xml:space="preserve">
+    <value>Cancel (Esc)</value>
+  </data>
+  <data name="SaveDialogTitle" xml:space="preserve">
+    <value>Save capture</value>
+  </data>
+  <data name="SaveFilterPng" xml:space="preserve">
+    <value>PNG image</value>
+  </data>
+  <data name="SaveFilterJpeg" xml:space="preserve">
+    <value>JPEG image</value>
+  </data>
+  <data name="SaveErrorMessage" xml:space="preserve">
+    <value>The image could not be saved to disk.</value>
+  </data>
 </root>

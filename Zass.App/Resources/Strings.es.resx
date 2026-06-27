@@ -106,4 +106,25 @@
   <data name="LabelTextSize" xml:space="preserve">
     <value>Tamaño</value>
   </data>
+  <data name="ToolCopy" xml:space="preserve">
+    <value>Copiar al portapapeles (Ctrl+C)</value>
+  </data>
+  <data name="ToolSave" xml:space="preserve">
+    <value>Guardar en archivo (Ctrl+S)</value>
+  </data>
+  <data name="ToolClose" xml:space="preserve">
+    <value>Cancelar (Esc)</value>
+  </data>
+  <data name="SaveDialogTitle" xml:space="preserve">
+    <value>Guardar captura</value>
+  </data>
+  <data name="SaveFilterPng" xml:space="preserve">
+    <value>Imagen PNG</value>
+  </data>
+  <data name="SaveFilterJpeg" xml:space="preserve">
+    <value>Imagen JPEG</value>
+  </data>
+  <data name="SaveErrorMessage" xml:space="preserve">
+    <value>No se pudo guardar la imagen en disco.</value>
+  </data>
 </root>
