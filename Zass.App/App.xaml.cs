@@ -4,28 +4,42 @@ using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using H.NotifyIcon;
 using Zass.App.Hotkey;
+using Zass.App.Localization;
 using Zass.App.Overlay;
 using Zass.App.Resources;
+using Zass.App.Startup;
+using Zass.App.Views;
 using Zass.Core.Capture;
+using Zass.Core.Settings;
 
 namespace Zass.App;
 
 /// <summary>
-/// Application host: lives in the system tray, owns the global hotkey, and shows
-/// the capture overlay on demand. No main window.
+/// Application host: lives in the system tray, owns the global hotkey and the
+/// persisted settings, and shows the capture overlay on demand. No main window.
 /// </summary>
 public partial class App : Application
 {
+    private readonly IScreenCaptureService _captureService = new ScreenCaptureService();
+    private readonly SettingsStore _store = SettingsStore.CreateDefault();
+
     private TaskbarIcon? _trayIcon;
     private HotkeyManager? _hotkey;
-    private readonly IScreenCaptureService _captureService = new ScreenCaptureService();
     private OverlayWindow? _overlay;
+    private SettingsWindow? _settingsWindow;
+    private AppSettings _settings = new();
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
 
+        _settings = _store.Load();
+        LocalizationManager.Apply(_settings.Language);
+        // Keep the Run entry in sync with the persisted preference (RF-19).
+        WindowsStartup.Set(_settings.StartWithWindows);
+
         CreateTrayIcon();
+        LocalizationManager.LanguageChanged += (_, _) => RefreshTray();
 
         _hotkey = new HotkeyManager();
         _hotkey.HotkeyPressed += (_, _) => BeginCapture();
@@ -38,25 +52,39 @@ public partial class App : Application
 
     private void CreateTrayIcon()
     {
-        var menu = new ContextMenu();
-
-        var captureItem = new MenuItem { Header = Strings.TrayCapture };
-        captureItem.Click += (_, _) => BeginCapture();
-        menu.Items.Add(captureItem);
-
-        menu.Items.Add(new Separator());
-
-        var exitItem = new MenuItem { Header = Strings.TrayExit };
-        exitItem.Click += (_, _) => Shutdown();
-        menu.Items.Add(exitItem);
-
         _trayIcon = new TaskbarIcon
         {
-            ToolTipText = Strings.TrayTooltip,
             IconSource = new BitmapImage(new Uri("pack://application:,,,/Resources/zass.ico")),
-            ContextMenu = menu,
         };
+        RefreshTray();
         _trayIcon.ForceCreate();
+    }
+
+    /// <summary>Rebuilds the tray tooltip and menu in the current language (RF-20).</summary>
+    private void RefreshTray()
+    {
+        if (_trayIcon is null)
+        {
+            return;
+        }
+
+        _trayIcon.ToolTipText = Strings.TrayTooltip;
+
+        var menu = new ContextMenu();
+        menu.Items.Add(MenuItem(Strings.TrayCapture, (_, _) => BeginCapture()));
+        menu.Items.Add(new Separator());
+        menu.Items.Add(MenuItem(Strings.TraySettings, (_, _) => ShowSettings()));
+        menu.Items.Add(MenuItem(Strings.TrayAbout, (_, _) => ShowAbout()));
+        menu.Items.Add(new Separator());
+        menu.Items.Add(MenuItem(Strings.TrayExit, (_, _) => Shutdown()));
+        _trayIcon.ContextMenu = menu;
+    }
+
+    private static MenuItem MenuItem(string header, RoutedEventHandler onClick)
+    {
+        var item = new MenuItem { Header = header };
+        item.Click += onClick;
+        return item;
     }
 
     /// <summary>
@@ -73,9 +101,21 @@ public partial class App : Application
         try
         {
             CapturedImage capture = _captureService.CaptureActiveMonitor();
-            _overlay = new OverlayWindow(capture);
-            _overlay.Closed += (_, _) => _overlay = null;
-            _overlay.Show();
+            var options = new OverlayOptions(
+                _settings.LastColor,
+                _settings.LastThickness,
+                _settings.LastTextSize,
+                _settings.DefaultFormat,
+                _settings.JpegQuality);
+
+            var overlay = new OverlayWindow(capture, options);
+            overlay.Closed += (_, _) =>
+            {
+                RememberAnnotationStyle(overlay);
+                _overlay = null;
+            };
+            _overlay = overlay;
+            overlay.Show();
         }
         catch (Exception ex)
         {
@@ -84,6 +124,47 @@ public partial class App : Application
             MessageBox.Show(Strings.CaptureErrorMessage, Strings.HotkeyConflictTitle,
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
+    }
+
+    /// <summary>
+    /// Persists the color/thickness/text size last used in the overlay so the next
+    /// capture starts from them (RF-21). A failed write is logged, not fatal.
+    /// </summary>
+    private void RememberAnnotationStyle(OverlayWindow overlay)
+    {
+        _settings.LastColor = overlay.LastColor;
+        _settings.LastThickness = overlay.LastThickness;
+        _settings.LastTextSize = overlay.LastTextSize;
+
+        try
+        {
+            _store.Save(_settings);
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceWarning($"Zass: could not persist the last annotation style: {ex.Message}");
+        }
+    }
+
+    private void ShowSettings()
+    {
+        if (_settingsWindow != null)
+        {
+            _settingsWindow.Activate();
+            return;
+        }
+
+        _settingsWindow = new SettingsWindow(_settings, _store);
+        _settingsWindow.Closed += (_, _) => _settingsWindow = null;
+        _settingsWindow.Show();
+        _settingsWindow.Activate();
+    }
+
+    private void ShowAbout()
+    {
+        var about = new AboutWindow();
+        about.Show();
+        about.Activate();
     }
 
     protected override void OnExit(ExitEventArgs e)

@@ -53,10 +53,16 @@ public partial class OverlayWindow : Window
 
     private OverlayTool _tool = OverlayTool.Pointer;
 
-    // Default annotation style; a color/thickness/size picker arrives in Increment 5.
-    private ArgbColor _currentColor = ArgbColor.Red;
-    private double _currentThickness = 3.0;
-    private double _currentTextSize = 18.0;
+    // Active annotation style; seeded from the persisted settings (RF-21) and updated
+    // by the toolbar. The final values are read back on close to remember them.
+    private ArgbColor _currentColor;
+    private double _currentThickness;
+    private double _currentTextSize;
+
+    // Export defaults from settings: format pre-selected in the Save dialog and the
+    // JPEG quality used when saving as JPG.
+    private readonly ImageExportFormat _defaultFormat;
+    private readonly int _jpegQuality;
 
     private DragMode _mode;
     private SelectionHandle _activeHandle;
@@ -68,11 +74,17 @@ public partial class OverlayWindow : Window
     // Guards the color popup against the closing click immediately reopening it.
     private bool _suppressColorReopen;
 
-    public OverlayWindow(CapturedImage capture)
+    public OverlayWindow(CapturedImage capture, OverlayOptions options)
     {
         _capture = capture;
         _scaleX = capture.ScaleX;
         _scaleY = capture.ScaleY;
+
+        _currentColor = options.InitialColor;
+        _currentThickness = options.InitialThickness;
+        _currentTextSize = options.InitialTextSize;
+        _defaultFormat = options.DefaultFormat;
+        _jpegQuality = options.JpegQuality;
 
         InitializeComponent();
 
@@ -99,6 +111,15 @@ public partial class OverlayWindow : Window
         Loaded += OnLoaded;
         SizeChanged += (_, _) => UpdateVisuals();
     }
+
+    /// <summary>The color in effect when the overlay closed, to persist for next time (RF-21).</summary>
+    public ArgbColor LastColor => _currentColor;
+
+    /// <summary>The stroke thickness in effect when the overlay closed (RF-21).</summary>
+    public double LastThickness => _currentThickness;
+
+    /// <summary>The text size in effect when the overlay closed (RF-21).</summary>
+    public double LastTextSize => _currentTextSize;
 
     private int HandleHitRadiusPhysical => (int)Math.Round(HandleHitRadiusDip * _scaleX);
 
@@ -199,8 +220,11 @@ public partial class OverlayWindow : Window
         ColorPickerControl.SelectedColorChanged += OnPickerColorChanged;
         ColorPickerControl.ColorCommitted += (_, _) => ColorPopup.IsOpen = false;
 
-        // Slider values match the XAML defaults, so ValueChanged won't fire here:
-        // seed the value captions explicitly.
+        // Seed the sliders from the persisted style (RF-21). Setting a value that
+        // differs from the XAML default fires ValueChanged and refreshes its caption;
+        // seed the captions explicitly to also cover the value-equals-default case.
+        ThicknessSlider.Value = _currentThickness;
+        TextSizeSlider.Value = _currentTextSize;
         ThicknessValue.Text = FormatValue(_currentThickness);
         TextSizeValue.Text = FormatValue(_currentTextSize);
 
@@ -713,11 +737,13 @@ public partial class OverlayWindow : Window
         var dialog = new Microsoft.Win32.SaveFileDialog
         {
             Title = Strings.SaveDialogTitle,
-            FileName = ExportNaming.DefaultFileName(DateTime.Now),
-            DefaultExt = ".png",
+            FileName = ExportNaming.DefaultFileName(DateTime.Now, _defaultFormat),
+            DefaultExt = ExportNaming.ExtensionFor(_defaultFormat),
             AddExtension = true,
             OverwritePrompt = true,
             Filter = $"{Strings.SaveFilterPng}|*.png|{Strings.SaveFilterJpeg}|*.jpg;*.jpeg",
+            // Pre-select the user's preferred default format (RF-16). FilterIndex is 1-based.
+            FilterIndex = _defaultFormat == ImageExportFormat.Jpeg ? 2 : 1,
         };
 
         // The overlay is topmost; drop that while the modal dialog is up so it isn't
@@ -735,7 +761,8 @@ public partial class OverlayWindow : Window
         try
         {
             System.Windows.Media.Imaging.BitmapSource image = ComposeForExport();
-            ImageExporter.Save(image, dialog.FileName, ExportNaming.FormatFromExtension(dialog.FileName));
+            ImageExporter.Save(
+                image, dialog.FileName, ExportNaming.FormatFromExtension(dialog.FileName), _jpegQuality);
         }
         catch (Exception ex)
         {

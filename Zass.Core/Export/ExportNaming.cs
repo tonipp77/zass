@@ -15,7 +15,19 @@ public static class ExportNaming
     /// The timestamp is formatted with the invariant culture so it never localizes.
     /// </summary>
     public static string DefaultFileName(DateTime timestamp) =>
-        "Zass_" + timestamp.ToString("yyyy-MM-dd_HHmmss", CultureInfo.InvariantCulture) + ".png";
+        DefaultFileName(timestamp, ImageExportFormat.Png);
+
+    /// <summary>
+    /// Default save name with a sortable timestamp and the extension matching
+    /// <paramref name="format"/> (the user's preferred default format, RF-16/RF-17).
+    /// </summary>
+    public static string DefaultFileName(DateTime timestamp, ImageExportFormat format) =>
+        "Zass_" + timestamp.ToString("yyyy-MM-dd_HHmmss", CultureInfo.InvariantCulture)
+        + ExtensionFor(format);
+
+    /// <summary>The canonical file extension (with dot) for an export format.</summary>
+    public static string ExtensionFor(ImageExportFormat format) =>
+        format == ImageExportFormat.Jpeg ? ".jpg" : ".png";
 
     /// <summary>Resolves the output format from a path's extension; PNG is the fallback.</summary>
     public static ImageExportFormat FormatFromExtension(string path) =>

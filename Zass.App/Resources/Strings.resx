@@ -64,6 +64,12 @@
   <data name="TrayCapture" xml:space="preserve">
     <value>Capture now</value>
   </data>
+  <data name="TraySettings" xml:space="preserve">
+    <value>Settings…</value>
+  </data>
+  <data name="TrayAbout" xml:space="preserve">
+    <value>About…</value>
+  </data>
   <data name="TrayExit" xml:space="preserve">
     <value>Exit</value>
   </data>
@@ -126,5 +132,62 @@
   </data>
   <data name="SaveErrorMessage" xml:space="preserve">
     <value>The image could not be saved to disk.</value>
+  </data>
+  <data name="SettingsTitle" xml:space="preserve">
+    <value>Zass — Settings</value>
+  </data>
+  <data name="SettingsLanguage" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="SettingsLanguageSystem" xml:space="preserve">
+    <value>System default</value>
+  </data>
+  <data name="SettingsLanguageEnglish" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="SettingsLanguageSpanish" xml:space="preserve">
+    <value>Español</value>
+  </data>
+  <data name="SettingsDefaultFormat" xml:space="preserve">
+    <value>Default save format</value>
+  </data>
+  <data name="SettingsFormatPng" xml:space="preserve">
+    <value>PNG</value>
+  </data>
+  <data name="SettingsFormatJpeg" xml:space="preserve">
+    <value>JPG</value>
+  </data>
+  <data name="SettingsJpegQuality" xml:space="preserve">
+    <value>JPEG quality</value>
+  </data>
+  <data name="SettingsStartWithWindows" xml:space="preserve">
+    <value>Start Zass with Windows</value>
+  </data>
+  <data name="SettingsHotkey" xml:space="preserve">
+    <value>Capture shortcut</value>
+  </data>
+  <data name="SettingsHotkeyFixedNote" xml:space="preserve">
+    <value>Not configurable in this version</value>
+  </data>
+  <data name="SettingsSave" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="SettingsCancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="SettingsSaveErrorMessage" xml:space="preserve">
+    <value>The settings could not be saved.</value>
+  </data>
+  <data name="AboutTitle" xml:space="preserve">
+    <value>About Zass</value>
+  </data>
+  <data name="AboutDescription" xml:space="preserve">
+    <value>Capture a region or the active monitor and annotate it in place — with editable vector objects and undo/redo — before copying it to the clipboard or saving it to disk.</value>
+  </data>
+  <data name="AboutVersionLabel" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="AboutClose" xml:space="preserve">
+    <value>Close</value>
   </data>
 </root>

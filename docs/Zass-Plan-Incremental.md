@@ -178,11 +178,48 @@ tiradores, marcos), recorte a la selección, fidelidad píxel a píxel. Guardar 
   - **Gap detectado fuera de alcance:** RF-5 (seleccionar el monitor completo sin arrastrar)
     no está asignado a ningún incremento del plan; queda pendiente de ubicar (no es de este).
 
-### ⬜ Incremento 7 — Producto: bandeja, ajustes, i18n y persistencia
+### ✅ Incremento 7 — Producto: bandeja, ajustes, i18n y persistencia
 Menú de bandeja completo (Capturar, Ajustes, Acerca de, Salir), pantalla de Ajustes,
-localización es/en conmutable en caliente (`ResourceDictionary`), persistencia JSON en
+localización es/en conmutable en caliente, persistencia JSON en
 `%APPDATA%\Zass\settings.json`, arranque con Windows (clave Run HKCU).
 - **Cubre:** RF-18, RF-19, RF-20, RF-21 · Arquitectura §9, §10
+- **Estado:** Completado y validado por el usuario (compila sin avisos; 96 tests en verde).
+- **Decisiones confirmadas por el usuario:**
+  - **Atajo fijo en v1.** Ctrl+Shift+S queda fijo (Arquitectura §3.2); en Ajustes se
+    muestra en modo **solo lectura** y se persiste su descriptor en `settings.json`. La
+    reconfiguración del atajo (**RF-2**) **no estaba asignada a ningún incremento** del
+    plan y queda como gap pendiente de ubicar, igual que RF-5 (señalado en el Incremento 6).
+- **Notas de diseño / alcance:**
+  - **Persistencia (`Zass.Core.Settings`, sin WPF, testeable):** `AppSettings` (idioma,
+    formato por defecto, calidad JPG, arranque con Windows, atajo, último color/grosor/
+    tamaño) + `SettingsStore` (carga/guarda JSON con `System.Text.Json` en
+    `%APPDATA%\Zass\settings.json`). `Normalize()` recorta valores fuera de rango y
+    resetea enums/atajo inválidos, de modo que un archivo corrupto o editado a mano nunca
+    introduce valores inválidos; un archivo ausente o ilegible cae a valores por defecto
+    sin romper el arranque. El color se serializa como entero empaquetado 0xAARRGGBB.
+  - **i18n conmutable en caliente:** se mantiene el enfoque de satélites `.resx` del
+    Incremento 0 (en lugar de los `ResourceDictionary` que **recomienda** la Arquitectura
+    §9). `LocalizationManager` cambia `CurrentUICulture` y emite `LanguageChanged`; la
+    bandeja y la ventana de Ajustes refrescan sus textos en vivo y el overlay (que se
+    recrea por captura) toma el idioma actual. Esto cumple RF-20 (sin reiniciar) sin
+    reescribir la capa de localización ya validada. El idioma "Sistema" se resuelve contra
+    la cultura del SO capturada al arrancar (es→es, resto→inglés neutro).
+  - **Ventana de Ajustes (code-behind, como el resto de la UI):** idioma (Sistema/English/
+    Español, con **previsualización en vivo** y revertido al cancelar), formato por defecto
+    (PNG/JPG), calidad JPG (slider 1–100), iniciar con Windows, y el atajo en solo lectura.
+    Los valores se persisten **solo al pulsar Guardar**; un error de escritura se notifica
+    por la UI y mantiene la ventana abierta.
+  - **Arranque con Windows (RF-19):** `WindowsStartup` gestiona el valor `Zass` en
+    `HKCU\…\Run` (sin permisos de administrador). En cada arranque se reconcilia la clave
+    con la preferencia persistida (reescribe la ruta del ejecutable si la app se movió).
+  - **Acerca de:** ventana modal sencilla con nombre, versión (leída del ensamblado) y
+    descripción, localizada.
+  - **Menú de bandeja completo (RF-18):** Capturar ahora · Ajustes · Acerca de · Salir,
+    reconstruido al cambiar de idioma.
+  - **Último color/grosor/tamaño entre sesiones (RF-21):** el overlay se siembra desde los
+    ajustes y, al cerrarse, devuelve los últimos valores usados, que se guardan en disco.
+  - **Calidad JPG configurable:** `ImageExporter.Save` recibe la calidad desde los ajustes
+    (antes fija en 90); el formato por defecto preselecciona el filtro del diálogo Guardar.
 
 ### ⬜ Incremento 8 — Empaquetado y distribución
 Instalador Inno Setup y/o build portable self-contained. Firma de código diferida a v2.

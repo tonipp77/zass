@@ -10,6 +10,7 @@
     <ApplicationIcon>Resources\zass.ico</ApplicationIcon>
     <AssemblyName>Zass</AssemblyName>
     <RootNamespace>Zass.App</RootNamespace>
+    <Version>1.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>

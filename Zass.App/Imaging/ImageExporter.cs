@@ -11,15 +11,15 @@ namespace Zass.App.Imaging;
 /// </summary>
 internal static class ImageExporter
 {
-    /// <summary>Default JPEG quality; a configurable value arrives with Settings (Increment 7).</summary>
-    private const int JpegQuality = 90;
-
-    /// <summary>Writes <paramref name="image"/> to <paramref name="path"/> in the chosen format.</summary>
-    public static void Save(BitmapSource image, string path, ImageExportFormat format)
+    /// <summary>
+    /// Writes <paramref name="image"/> to <paramref name="path"/> in the chosen format.
+    /// <paramref name="jpegQuality"/> (1–100) applies only to JPEG output (RF-16, Settings).
+    /// </summary>
+    public static void Save(BitmapSource image, string path, ImageExportFormat format, int jpegQuality)
     {
         BitmapEncoder encoder = format switch
         {
-            ImageExportFormat.Jpeg => new JpegBitmapEncoder { QualityLevel = JpegQuality },
+            ImageExportFormat.Jpeg => new JpegBitmapEncoder { QualityLevel = jpegQuality },
             _ => new PngBitmapEncoder(),
         };
 

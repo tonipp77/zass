@@ -18,6 +18,25 @@ public class ExportNamingTests
         Assert.Equal("Zass_2026-01-05_090703.png", ExportNaming.DefaultFileName(timestamp));
     }
 
+    [Fact]
+    public void DefaultFileName_WithFormat_UsesMatchingExtension()
+    {
+        var timestamp = new DateTime(2026, 6, 27, 14, 22, 33);
+
+        Assert.Equal("Zass_2026-06-27_142233.png",
+            ExportNaming.DefaultFileName(timestamp, ImageExportFormat.Png));
+        Assert.Equal("Zass_2026-06-27_142233.jpg",
+            ExportNaming.DefaultFileName(timestamp, ImageExportFormat.Jpeg));
+    }
+
+    [Theory]
+    [InlineData(ImageExportFormat.Png, ".png")]
+    [InlineData(ImageExportFormat.Jpeg, ".jpg")]
+    public void ExtensionFor_MapsFormatToExtension(ImageExportFormat format, string expected)
+    {
+        Assert.Equal(expected, ExportNaming.ExtensionFor(format));
+    }
+
     [Theory]
     [InlineData("C:\\shots\\capture.png", ImageExportFormat.Png)]
     [InlineData("C:\\shots\\capture.PNG", ImageExportFormat.Png)]
