@@ -3,13 +3,14 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using H.NotifyIcon;
-using Zass.App.Hotkey;
+using Zass.App.Hotkeys;
 using Zass.App.Localization;
 using Zass.App.Overlay;
 using Zass.App.Resources;
 using Zass.App.Startup;
 using Zass.App.Views;
 using Zass.Core.Capture;
+using Zass.Core.Hotkeys;
 using Zass.Core.Settings;
 
 namespace Zass.App;
@@ -43,7 +44,15 @@ public partial class App : Application
 
         _hotkey = new HotkeyManager();
         _hotkey.HotkeyPressed += (_, _) => BeginCapture();
-        if (!_hotkey.Register())
+
+        // Fall back to the default if the persisted descriptor is malformed.
+        if (!Hotkey.TryParse(_settings.Hotkey, out Hotkey hotkey))
+        {
+            hotkey = Hotkey.Default;
+            _settings.Hotkey = hotkey.ToString();
+        }
+
+        if (!_hotkey.TryApply(hotkey))
         {
             MessageBox.Show(Strings.HotkeyConflictMessage, Strings.HotkeyConflictTitle,
                 MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -154,7 +163,7 @@ public partial class App : Application
             return;
         }
 
-        _settingsWindow = new SettingsWindow(_settings, _store);
+        _settingsWindow = new SettingsWindow(_settings, _store, hk => _hotkey!.TryApply(hk));
         _settingsWindow.Closed += (_, _) => _settingsWindow = null;
         _settingsWindow.Show();
         _settingsWindow.Activate();

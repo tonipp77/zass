@@ -37,6 +37,7 @@ internal static class Strings
     public static string ToolCopy => Get(nameof(ToolCopy));
     public static string ToolSave => Get(nameof(ToolSave));
     public static string ToolClose => Get(nameof(ToolClose));
+    public static string OverlayHint => Get(nameof(OverlayHint));
     public static string SaveDialogTitle => Get(nameof(SaveDialogTitle));
     public static string SaveFilterPng => Get(nameof(SaveFilterPng));
     public static string SaveFilterJpeg => Get(nameof(SaveFilterJpeg));
@@ -52,7 +53,10 @@ internal static class Strings
     public static string SettingsJpegQuality => Get(nameof(SettingsJpegQuality));
     public static string SettingsStartWithWindows => Get(nameof(SettingsStartWithWindows));
     public static string SettingsHotkey => Get(nameof(SettingsHotkey));
-    public static string SettingsHotkeyFixedNote => Get(nameof(SettingsHotkeyFixedNote));
+    public static string SettingsHotkeyHint => Get(nameof(SettingsHotkeyHint));
+    public static string SettingsHotkeyReset => Get(nameof(SettingsHotkeyReset));
+    public static string SettingsHotkeyInUse => Get(nameof(SettingsHotkeyInUse));
+    public static string SettingsHotkeyInvalid => Get(nameof(SettingsHotkeyInvalid));
     public static string SettingsSave => Get(nameof(SettingsSave));
     public static string SettingsCancel => Get(nameof(SettingsCancel));
     public static string SettingsSaveErrorMessage => Get(nameof(SettingsSaveErrorMessage));

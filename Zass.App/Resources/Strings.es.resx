@@ -77,7 +77,7 @@
     <value>Zass</value>
   </data>
   <data name="HotkeyConflictMessage" xml:space="preserve">
-    <value>No se pudo registrar el atajo global Ctrl+Mayús+S (puede estar en uso por otra aplicación). Usa el menú de la bandeja para capturar.</value>
+    <value>No se pudo registrar el atajo global de captura (puede estar en uso por otra aplicación). Usa el menú de la bandeja para capturar.</value>
   </data>
   <data name="CaptureErrorMessage" xml:space="preserve">
     <value>No se pudo completar la captura de pantalla.</value>
@@ -120,6 +120,9 @@
   </data>
   <data name="ToolClose" xml:space="preserve">
     <value>Cancelar (Esc)</value>
+  </data>
+  <data name="OverlayHint" xml:space="preserve">
+    <value>Arrastra para seleccionar  ·  Ctrl+A: monitor completo  ·  Esc: cancelar</value>
   </data>
   <data name="SaveDialogTitle" xml:space="preserve">
     <value>Guardar captura</value>
@@ -166,8 +169,17 @@
   <data name="SettingsHotkey" xml:space="preserve">
     <value>Atajo de captura</value>
   </data>
-  <data name="SettingsHotkeyFixedNote" xml:space="preserve">
-    <value>No configurable en esta versión</value>
+  <data name="SettingsHotkeyHint" xml:space="preserve">
+    <value>Haz clic en el cuadro y pulsa la combinación deseada (una tecla, normalmente con Ctrl/Alt/Mayús).</value>
+  </data>
+  <data name="SettingsHotkeyReset" xml:space="preserve">
+    <value>Restablecer</value>
+  </data>
+  <data name="SettingsHotkeyInUse" xml:space="preserve">
+    <value>El atajo elegido ya está en uso por otra aplicación. Se mantiene el anterior.</value>
+  </data>
+  <data name="SettingsHotkeyInvalid" xml:space="preserve">
+    <value>Elige una combinación válida: una tecla, normalmente junto con Ctrl, Alt o Mayús.</value>
   </data>
   <data name="SettingsSave" xml:space="preserve">
     <value>Guardar</value>

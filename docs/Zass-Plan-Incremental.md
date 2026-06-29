@@ -185,10 +185,10 @@ localización es/en conmutable en caliente, persistencia JSON en
 - **Cubre:** RF-18, RF-19, RF-20, RF-21 · Arquitectura §9, §10
 - **Estado:** Completado y validado por el usuario (compila sin avisos; 96 tests en verde).
 - **Decisiones confirmadas por el usuario:**
-  - **Atajo fijo en v1.** Ctrl+Shift+S queda fijo (Arquitectura §3.2); en Ajustes se
-    muestra en modo **solo lectura** y se persiste su descriptor en `settings.json`. La
-    reconfiguración del atajo (**RF-2**) **no estaba asignada a ningún incremento** del
-    plan y queda como gap pendiente de ubicar, igual que RF-5 (señalado en el Incremento 6).
+  - **Atajo configurable.** En el Incremento 7 el atajo se entregó fijo en Ctrl+Shift+S
+    (solo lectura) por decisión del usuario; la reconfiguración (**RF-2**) se implementó
+    inmediatamente después como cierre de gap (ver *Gaps cerrados* más abajo). El descriptor
+    del atajo se persiste en `settings.json`.
 - **Notas de diseño / alcance:**
   - **Persistencia (`Zass.Core.Settings`, sin WPF, testeable):** `AppSettings` (idioma,
     formato por defecto, calidad JPG, arranque con Windows, atajo, último color/grosor/
@@ -220,6 +220,30 @@ localización es/en conmutable en caliente, persistencia JSON en
     ajustes y, al cerrarse, devuelve los últimos valores usados, que se guardan en disco.
   - **Calidad JPG configurable:** `ImageExporter.Save` recibe la calidad desde los ajustes
     (antes fija en 90); el formato por defecto preselecciona el filtro del diálogo Guardar.
+
+### ✅ Gaps cerrados — RF-2 (atajo configurable) y RF-5 (captura de pantalla completa)
+Dos requisitos del PRD que el plan no había asignado a ningún incremento, implementados
+tras validar el Incremento 7.
+- **Cubre:** RF-2, RF-5 · PRD §4.1 · Arquitectura §3
+- **Estado:** Completado y validado por el usuario (compila sin avisos; 120 tests en verde).
+- **Notas de diseño / alcance:**
+  - **RF-2 — Atajo reconfigurable sin reiniciar:** modelo `Hotkey` (modificadores + tecla)
+    en `Zass.Core.Hotkeys`, UI-agnóstico y testeable: formato/parseo canónico
+    (`Ctrl+Shift+S`), validación (tecla conocida + exige modificador salvo F1–F24/Impr Pant)
+    y tabla bidireccional VK↔nombre (`HotkeyKeys`). `HotkeyManager` pasa de registro fijo a
+    `TryApply(Hotkey)`: desregistra el anterior, registra el nuevo y, si la combinación está
+    ocupada o es inválida, **restaura el anterior** y devuelve `false` (Arquitectura §3.2).
+    En Ajustes, un campo "captura" graba la combinación pulsada (`KeyInterop` → VK), con
+    botón **Restablecer**; al Guardar se aplica en caliente y solo entonces se persiste. Una
+    combinación en uso se avisa por la UI y mantiene el atajo previo. El descriptor se
+    guarda en `settings.json` y se aplica al arrancar (con *fallback* al de por defecto si
+    el guardado está corrupto).
+  - **RF-5 — Capturar el monitor completo sin arrastrar:** atajo **Ctrl+A** dentro del
+    overlay selecciona todo el monitor activo (en píxeles físicos) dejando la selección
+    editable como cualquier otra. Se añadió una **pista** discreta antes de seleccionar
+    ("Arrastra para seleccionar · Ctrl+A: monitor completo · Esc: cancelar"), no interactiva
+    para no interceptar clics. Nota: este Ctrl+A es un atajo **interno del overlay**,
+    independiente del atajo global de captura (RF-1/RF-2).
 
 ### ⬜ Incremento 8 — Empaquetado y distribución
 Instalador Inno Setup y/o build portable self-contained. Firma de código diferida a v2.

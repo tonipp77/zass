@@ -84,6 +84,15 @@
         <!-- Layer 3: live vector annotations (above the dim, at full brightness) -->
         <Canvas x:Name="AnnotationCanvas" ClipToBounds="True" />
 
+        <!-- Pre-selection hint (RF-5): how to select, including the whole-monitor shortcut.
+             Non-hit-testable so a click underneath still starts a selection. -->
+        <Border x:Name="HintBar" VerticalAlignment="Top" HorizontalAlignment="Center"
+                Margin="0,24,0,0" Padding="14,7" CornerRadius="6"
+                Background="#CC000000" BorderBrush="#40FFFFFF" BorderThickness="1"
+                IsHitTestVisible="False">
+            <TextBlock x:Name="HintText" Foreground="#E6FFFFFF" FontFamily="Segoe UI" FontSize="13" />
+        </Border>
+
         <!-- Layer 4: selection chrome (border, handles, dimensions) + floating toolbar -->
         <Canvas x:Name="ChromeCanvas" ClipToBounds="True">
             <Rectangle x:Name="SelectionBorder"

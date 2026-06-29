@@ -103,6 +103,7 @@ public partial class OverlayWindow : Window
         CopyButton.ToolTip = Strings.ToolCopy;
         SaveButton.ToolTip = Strings.ToolSave;
         CloseButton.ToolTip = Strings.ToolClose;
+        HintText.Text = Strings.OverlayHint;
         PointerToolButton.IsChecked = true;
 
         InitializeToolOptions();
@@ -363,6 +364,24 @@ public partial class OverlayWindow : Window
         BeginSelectionDraw(px, py);
     }
 
+    /// <summary>
+    /// Selects the whole active monitor without dragging (RF-5). The selection becomes
+    /// editable (handles/toolbar) exactly as a dragged one, so the user can still annotate.
+    /// </summary>
+    private void SelectFullMonitor()
+    {
+        if (_annotations.IsEditingText)
+        {
+            _annotations.CommitText();
+        }
+
+        _mode = DragMode.None;
+        _selection = _capture.PhysicalBounds;
+        _hasSelection = true;
+        UpdateVisuals();
+        Keyboard.Focus(this);
+    }
+
     private void BeginSelectionDraw(int px, int py)
     {
         _mode = DragMode.DrawingSelection;
@@ -467,6 +486,10 @@ public partial class OverlayWindow : Window
         {
             switch (e.Key)
             {
+                case Key.A:
+                    SelectFullMonitor();
+                    e.Handled = true;
+                    return;
                 case Key.Z:
                     _annotations.Undo();
                     e.Handled = true;
@@ -566,6 +589,11 @@ public partial class OverlayWindow : Window
     private void UpdateVisuals()
     {
         var full = new Rect(0, 0, ActualWidth, ActualHeight);
+
+        // The hint is only useful until a selection exists (RF-5).
+        HintBar.Visibility = _hasSelection && !_selection.IsEmpty
+            ? Visibility.Collapsed
+            : Visibility.Visible;
 
         if (_hasSelection && !_selection.IsEmpty)
         {

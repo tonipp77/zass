@@ -77,7 +77,7 @@
     <value>Zass</value>
   </data>
   <data name="HotkeyConflictMessage" xml:space="preserve">
-    <value>The global shortcut Ctrl+Shift+S could not be registered (it may be in use by another app). Use the tray menu to capture.</value>
+    <value>The global capture shortcut could not be registered (it may be in use by another app). Use the tray menu to capture.</value>
   </data>
   <data name="CaptureErrorMessage" xml:space="preserve">
     <value>The screen capture could not be completed.</value>
@@ -120,6 +120,9 @@
   </data>
   <data name="ToolClose" xml:space="preserve">
     <value>Cancel (Esc)</value>
+  </data>
+  <data name="OverlayHint" xml:space="preserve">
+    <value>Drag to select  ·  Ctrl+A: whole monitor  ·  Esc: cancel</value>
   </data>
   <data name="SaveDialogTitle" xml:space="preserve">
     <value>Save capture</value>
@@ -166,8 +169,17 @@
   <data name="SettingsHotkey" xml:space="preserve">
     <value>Capture shortcut</value>
   </data>
-  <data name="SettingsHotkeyFixedNote" xml:space="preserve">
-    <value>Not configurable in this version</value>
+  <data name="SettingsHotkeyHint" xml:space="preserve">
+    <value>Click the box and press the desired combination (a key, normally with Ctrl/Alt/Shift).</value>
+  </data>
+  <data name="SettingsHotkeyReset" xml:space="preserve">
+    <value>Reset</value>
+  </data>
+  <data name="SettingsHotkeyInUse" xml:space="preserve">
+    <value>The chosen shortcut is already in use by another application. The previous one is kept.</value>
+  </data>
+  <data name="SettingsHotkeyInvalid" xml:space="preserve">
+    <value>Choose a valid combination: a key, normally together with Ctrl, Alt or Shift.</value>
   </data>
   <data name="SettingsSave" xml:space="preserve">
     <value>Save</value>

@@ -55,12 +55,22 @@
         <CheckBox x:Name="StartupCheck" Grid.Row="3" Grid.Column="1" Margin="0,0,0,14"
                   VerticalContentAlignment="Center" />
 
-        <!-- Capture shortcut (read-only in v1) -->
+        <!-- Capture shortcut (RF-2): click the box and press a combination -->
         <TextBlock x:Name="HotkeyLabel" Grid.Row="4" Grid.Column="0" Style="{StaticResource FieldLabel}"
-                   VerticalAlignment="Top" Margin="0,2,16,0" />
+                   VerticalAlignment="Top" Margin="0,5,16,0" />
         <StackPanel Grid.Row="4" Grid.Column="1" Margin="0,0,0,18">
-            <TextBlock x:Name="HotkeyValue" FontWeight="SemiBold" />
-            <TextBlock x:Name="HotkeyNote" Foreground="Gray" FontSize="11" Margin="0,2,0,0" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="HotkeyCapture" Grid.Column="0" IsReadOnly="True" IsReadOnlyCaretVisible="False"
+                         Cursor="Hand" TextAlignment="Center" FontWeight="SemiBold" Padding="4,4"
+                         PreviewKeyDown="OnHotkeyCaptureKeyDown" />
+                <Button x:Name="HotkeyReset" Grid.Column="1" MinWidth="84" Height="28" Margin="8,0,0,0"
+                        Click="OnHotkeyResetClick" />
+            </Grid>
+            <TextBlock x:Name="HotkeyHint" Foreground="Gray" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap" />
         </StackPanel>
 
         <!-- Buttons -->

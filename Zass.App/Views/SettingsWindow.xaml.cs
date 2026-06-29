@@ -1,10 +1,12 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using Zass.App.Localization;
 using Zass.App.Resources;
 using Zass.App.Startup;
 using Zass.Core.Export;
+using Zass.Core.Hotkeys;
 using Zass.Core.Settings;
 
 namespace Zass.App.Views;
@@ -18,7 +20,12 @@ public partial class SettingsWindow : Window
 {
     private readonly AppSettings _settings;
     private readonly SettingsStore _store;
+    private readonly Func<Hotkey, bool> _applyHotkey;
     private readonly LanguageOption _originalLanguage;
+
+    // The shortcut currently applied, and the one the user just captured (if any).
+    private Hotkey _currentHotkey;
+    private Hotkey? _pendingHotkey;
 
     private readonly ComboBoxItem _langSystem = new() { Tag = LanguageOption.System };
     private readonly ComboBoxItem _langEnglish = new() { Tag = LanguageOption.English };
@@ -29,11 +36,13 @@ public partial class SettingsWindow : Window
     private bool _loaded;
     private bool _committed;
 
-    public SettingsWindow(AppSettings settings, SettingsStore store)
+    public SettingsWindow(AppSettings settings, SettingsStore store, Func<Hotkey, bool> applyHotkey)
     {
         _settings = settings;
         _store = store;
+        _applyHotkey = applyHotkey;
         _originalLanguage = settings.Language;
+        _currentHotkey = Hotkey.TryParse(settings.Hotkey, out Hotkey parsed) ? parsed : Hotkey.Default;
 
         InitializeComponent();
 
@@ -48,7 +57,7 @@ public partial class SettingsWindow : Window
         QualitySlider.Value = settings.JpegQuality;
         QualityValue.Text = FormatValue(settings.JpegQuality);
         StartupCheck.IsChecked = settings.StartWithWindows;
-        HotkeyValue.Text = settings.Hotkey;
+        HotkeyCapture.Text = _currentHotkey.ToString();
 
         ApplyStrings();
         LocalizationManager.LanguageChanged += OnLanguageRefresh;
@@ -72,7 +81,8 @@ public partial class SettingsWindow : Window
         QualityLabel.Text = Strings.SettingsJpegQuality;
         StartupCheck.Content = Strings.SettingsStartWithWindows;
         HotkeyLabel.Text = Strings.SettingsHotkey;
-        HotkeyNote.Text = Strings.SettingsHotkeyFixedNote;
+        HotkeyHint.Text = Strings.SettingsHotkeyHint;
+        HotkeyReset.Content = Strings.SettingsHotkeyReset;
         SaveButton.Content = Strings.SettingsSave;
         CancelButton.Content = Strings.SettingsCancel;
 
@@ -107,8 +117,93 @@ public partial class SettingsWindow : Window
 
     private static string FormatValue(int value) => value.ToString(CultureInfo.InvariantCulture);
 
+    /// <summary>Records the pressed combination as the pending shortcut (RF-2).</summary>
+    private void OnHotkeyCaptureKeyDown(object sender, KeyEventArgs e)
+    {
+        Key key = e.Key == Key.System ? e.SystemKey : e.Key;
+
+        // Let the dialog keep its own navigation/confirm keys.
+        if (key is Key.Enter or Key.Escape or Key.Tab)
+        {
+            return;
+        }
+
+        // A bare modifier press just updates the live modifier state; wait for a main key.
+        if (IsModifierKey(key))
+        {
+            e.Handled = true;
+            return;
+        }
+
+        var candidate = new Hotkey(CurrentModifiers(), (uint)KeyInterop.VirtualKeyFromKey(key));
+        if (candidate.KeyName is not null)
+        {
+            _pendingHotkey = candidate;
+            HotkeyCapture.Text = candidate.ToString();
+        }
+
+        e.Handled = true; // Never let the read-only box treat the key as input/navigation.
+    }
+
+    private void OnHotkeyResetClick(object sender, RoutedEventArgs e)
+    {
+        _pendingHotkey = Hotkey.Default;
+        HotkeyCapture.Text = Hotkey.Default.ToString();
+    }
+
+    private static bool IsModifierKey(Key key) => key is
+        Key.LeftCtrl or Key.RightCtrl or Key.LeftShift or Key.RightShift or
+        Key.LeftAlt or Key.RightAlt or Key.LWin or Key.RWin or Key.System;
+
+    private static HotkeyModifierKeys CurrentModifiers()
+    {
+        ModifierKeys m = Keyboard.Modifiers;
+        var result = HotkeyModifierKeys.None;
+        if (m.HasFlag(ModifierKeys.Control))
+        {
+            result |= HotkeyModifierKeys.Control;
+        }
+
+        if (m.HasFlag(ModifierKeys.Alt))
+        {
+            result |= HotkeyModifierKeys.Alt;
+        }
+
+        if (m.HasFlag(ModifierKeys.Shift))
+        {
+            result |= HotkeyModifierKeys.Shift;
+        }
+
+        if (m.HasFlag(ModifierKeys.Windows))
+        {
+            result |= HotkeyModifierKeys.Win;
+        }
+
+        return result;
+    }
+
     private void OnSaveClick(object sender, RoutedEventArgs e)
     {
+        // Apply a changed shortcut first so an invalid or taken combination blocks the
+        // save (and surfaces a message) before any preference is persisted (RF-2).
+        Hotkey hotkey = _pendingHotkey ?? _currentHotkey;
+        if (!hotkey.IsValid)
+        {
+            MessageBox.Show(this, Strings.SettingsHotkeyInvalid, Strings.SettingsTitle,
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        if (hotkey != _currentHotkey && !_applyHotkey(hotkey))
+        {
+            MessageBox.Show(this, Strings.SettingsHotkeyInUse, Strings.SettingsTitle,
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        _currentHotkey = hotkey;
+        _pendingHotkey = null;
+
         var language = (LanguageOption)((ComboBoxItem)LanguageCombo.SelectedItem).Tag;
         var format = (ImageExportFormat)((ComboBoxItem)FormatCombo.SelectedItem).Tag;
 
@@ -116,6 +211,7 @@ public partial class SettingsWindow : Window
         _settings.DefaultFormat = format;
         _settings.JpegQuality = (int)QualitySlider.Value;
         _settings.StartWithWindows = StartupCheck.IsChecked == true;
+        _settings.Hotkey = hotkey.ToString();
 
         try
         {
