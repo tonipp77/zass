@@ -64,6 +64,12 @@
   <data name="TrayCapture" xml:space="preserve">
     <value>Capturar ahora</value>
   </data>
+  <data name="TraySettings" xml:space="preserve">
+    <value>Ajustes…</value>
+  </data>
+  <data name="TrayAbout" xml:space="preserve">
+    <value>Acerca de…</value>
+  </data>
   <data name="TrayExit" xml:space="preserve">
     <value>Salir</value>
   </data>
@@ -71,7 +77,7 @@
     <value>Zass</value>
   </data>
   <data name="HotkeyConflictMessage" xml:space="preserve">
-    <value>No se pudo registrar el atajo global Ctrl+Mayús+S (puede estar en uso por otra aplicación). Usa el menú de la bandeja para capturar.</value>
+    <value>No se pudo registrar el atajo global de captura (puede estar en uso por otra aplicación). Usa el menú de la bandeja para capturar.</value>
   </data>
   <data name="CaptureErrorMessage" xml:space="preserve">
     <value>No se pudo completar la captura de pantalla.</value>
@@ -93,5 +99,107 @@
   </data>
   <data name="ToolFreehand" xml:space="preserve">
     <value>Dibujo libre (D)</value>
+  </data>
+  <data name="ColorPicker" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="LabelHex" xml:space="preserve">
+    <value>Hex</value>
+  </data>
+  <data name="LabelThickness" xml:space="preserve">
+    <value>Grosor</value>
+  </data>
+  <data name="LabelTextSize" xml:space="preserve">
+    <value>Tamaño</value>
+  </data>
+  <data name="ToolCopy" xml:space="preserve">
+    <value>Copiar al portapapeles (Ctrl+C)</value>
+  </data>
+  <data name="ToolSave" xml:space="preserve">
+    <value>Guardar en archivo (Ctrl+S)</value>
+  </data>
+  <data name="ToolClose" xml:space="preserve">
+    <value>Cancelar (Esc)</value>
+  </data>
+  <data name="OverlayHint" xml:space="preserve">
+    <value>Arrastra para seleccionar  ·  Ctrl+A: monitor completo  ·  Esc: cancelar</value>
+  </data>
+  <data name="SaveDialogTitle" xml:space="preserve">
+    <value>Guardar captura</value>
+  </data>
+  <data name="SaveFilterPng" xml:space="preserve">
+    <value>Imagen PNG</value>
+  </data>
+  <data name="SaveFilterJpeg" xml:space="preserve">
+    <value>Imagen JPEG</value>
+  </data>
+  <data name="SaveErrorMessage" xml:space="preserve">
+    <value>No se pudo guardar la imagen en disco.</value>
+  </data>
+  <data name="SettingsTitle" xml:space="preserve">
+    <value>Zass — Ajustes</value>
+  </data>
+  <data name="SettingsLanguage" xml:space="preserve">
+    <value>Idioma</value>
+  </data>
+  <data name="SettingsLanguageSystem" xml:space="preserve">
+    <value>Predeterminado del sistema</value>
+  </data>
+  <data name="SettingsLanguageEnglish" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="SettingsLanguageSpanish" xml:space="preserve">
+    <value>Español</value>
+  </data>
+  <data name="SettingsDefaultFormat" xml:space="preserve">
+    <value>Formato de guardado predeterminado</value>
+  </data>
+  <data name="SettingsFormatPng" xml:space="preserve">
+    <value>PNG</value>
+  </data>
+  <data name="SettingsFormatJpeg" xml:space="preserve">
+    <value>JPG</value>
+  </data>
+  <data name="SettingsJpegQuality" xml:space="preserve">
+    <value>Calidad JPEG</value>
+  </data>
+  <data name="SettingsStartWithWindows" xml:space="preserve">
+    <value>Iniciar Zass con Windows</value>
+  </data>
+  <data name="SettingsHotkey" xml:space="preserve">
+    <value>Atajo de captura</value>
+  </data>
+  <data name="SettingsHotkeyHint" xml:space="preserve">
+    <value>Haz clic en el cuadro y pulsa la combinación deseada (una tecla, normalmente con Ctrl/Alt/Mayús).</value>
+  </data>
+  <data name="SettingsHotkeyReset" xml:space="preserve">
+    <value>Restablecer</value>
+  </data>
+  <data name="SettingsHotkeyInUse" xml:space="preserve">
+    <value>El atajo elegido ya está en uso por otra aplicación. Se mantiene el anterior.</value>
+  </data>
+  <data name="SettingsHotkeyInvalid" xml:space="preserve">
+    <value>Elige una combinación válida: una tecla, normalmente junto con Ctrl, Alt o Mayús.</value>
+  </data>
+  <data name="SettingsSave" xml:space="preserve">
+    <value>Guardar</value>
+  </data>
+  <data name="SettingsCancel" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="SettingsSaveErrorMessage" xml:space="preserve">
+    <value>No se pudieron guardar los ajustes.</value>
+  </data>
+  <data name="AboutTitle" xml:space="preserve">
+    <value>Acerca de Zass</value>
+  </data>
+  <data name="AboutDescription" xml:space="preserve">
+    <value>Captura una región o el monitor activo y anótala en el sitio — con objetos vectoriales editables y deshacer/rehacer — antes de copiarla al portapapeles o guardarla en disco.</value>
+  </data>
+  <data name="AboutVersionLabel" xml:space="preserve">
+    <value>Versión</value>
+  </data>
+  <data name="AboutClose" xml:space="preserve">
+    <value>Cerrar</value>
   </data>
 </root>

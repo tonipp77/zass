@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows;
@@ -12,6 +14,7 @@ using Zass.App.Imaging;
 using Zass.App.Resources;
 using Zass.Core.Annotations;
 using Zass.Core.Capture;
+using Zass.Core.Export;
 using Zass.Interop;
 
 namespace Zass.App.Overlay;
@@ -50,10 +53,16 @@ public partial class OverlayWindow : Window
 
     private OverlayTool _tool = OverlayTool.Pointer;
 
-    // Default annotation style; a color/thickness/size picker arrives in Increment 5.
-    private ArgbColor _currentColor = ArgbColor.Red;
-    private double _currentThickness = 3.0;
-    private double _currentTextSize = 18.0;
+    // Active annotation style; seeded from the persisted settings (RF-21) and updated
+    // by the toolbar. The final values are read back on close to remember them.
+    private ArgbColor _currentColor;
+    private double _currentThickness;
+    private double _currentTextSize;
+
+    // Export defaults from settings: format pre-selected in the Save dialog and the
+    // JPEG quality used when saving as JPG.
+    private readonly ImageExportFormat _defaultFormat;
+    private readonly int _jpegQuality;
 
     private DragMode _mode;
     private SelectionHandle _activeHandle;
@@ -62,11 +71,20 @@ public partial class OverlayWindow : Window
     private PhysicalRect _selection;
     private bool _hasSelection;
 
-    public OverlayWindow(CapturedImage capture)
+    // Guards the color popup against the closing click immediately reopening it.
+    private bool _suppressColorReopen;
+
+    public OverlayWindow(CapturedImage capture, OverlayOptions options)
     {
         _capture = capture;
         _scaleX = capture.ScaleX;
         _scaleY = capture.ScaleY;
+
+        _currentColor = options.InitialColor;
+        _currentThickness = options.InitialThickness;
+        _currentTextSize = options.InitialTextSize;
+        _defaultFormat = options.DefaultFormat;
+        _jpegQuality = options.JpegQuality;
 
         InitializeComponent();
 
@@ -82,12 +100,27 @@ public partial class OverlayWindow : Window
         RectangleToolButton.ToolTip = Strings.ToolRectangle;
         FilledRectangleToolButton.ToolTip = Strings.ToolFilledRectangle;
         FreehandToolButton.ToolTip = Strings.ToolFreehand;
+        CopyButton.ToolTip = Strings.ToolCopy;
+        SaveButton.ToolTip = Strings.ToolSave;
+        CloseButton.ToolTip = Strings.ToolClose;
+        HintText.Text = Strings.OverlayHint;
         PointerToolButton.IsChecked = true;
+
+        InitializeToolOptions();
 
         SourceInitialized += OnSourceInitialized;
         Loaded += OnLoaded;
         SizeChanged += (_, _) => UpdateVisuals();
     }
+
+    /// <summary>The color in effect when the overlay closed, to persist for next time (RF-21).</summary>
+    public ArgbColor LastColor => _currentColor;
+
+    /// <summary>The stroke thickness in effect when the overlay closed (RF-21).</summary>
+    public double LastThickness => _currentThickness;
+
+    /// <summary>The text size in effect when the overlay closed (RF-21).</summary>
+    public double LastTextSize => _currentTextSize;
 
     private int HandleHitRadiusPhysical => (int)Math.Round(HandleHitRadiusDip * _scaleX);
 
@@ -156,6 +189,14 @@ public partial class OverlayWindow : Window
         FreehandToolButton.IsChecked = tool == OverlayTool.Freehand;
         Cursor = tool == OverlayTool.Pointer ? Cursors.Arrow : Cursors.Cross;
 
+        UpdateToolOptions();
+
+        // The toolbar width changes with the visible options, so re-anchor it.
+        if (_hasSelection)
+        {
+            UpdateVisuals();
+        }
+
         // Keep keyboard focus on the window so Enter/Ctrl+C/Esc keep working after a
         // toolbar click (the buttons are non-focusable, this is belt-and-braces).
         Keyboard.Focus(this);
@@ -167,11 +208,108 @@ public partial class OverlayWindow : Window
         e.Handled = true;
     }
 
+    // --- Color / thickness / size options ---
+
+    private void InitializeToolOptions()
+    {
+        ColorButton.ToolTip = Strings.ColorPicker;
+        ThicknessLabel.Text = Strings.LabelThickness;
+        TextSizeLabel.Text = Strings.LabelTextSize;
+
+        ColorPickerControl.SelectedColor = ToMediaColor(_currentColor);
+        ColorSwatch.Background = new SolidColorBrush(ToMediaColor(_currentColor));
+        ColorPickerControl.SelectedColorChanged += OnPickerColorChanged;
+        ColorPickerControl.ColorCommitted += (_, _) => ColorPopup.IsOpen = false;
+
+        // Seed the sliders from the persisted style (RF-21). Setting a value that
+        // differs from the XAML default fires ValueChanged and refreshes its caption;
+        // seed the captions explicitly to also cover the value-equals-default case.
+        ThicknessSlider.Value = _currentThickness;
+        TextSizeSlider.Value = _currentTextSize;
+        ThicknessValue.Text = FormatValue(_currentThickness);
+        TextSizeValue.Text = FormatValue(_currentTextSize);
+
+        UpdateToolOptions();
+    }
+
+    private void UpdateToolOptions()
+    {
+        bool usesColor = _tool != OverlayTool.Pointer;
+        bool usesStroke = _tool is OverlayTool.Arrow or OverlayTool.Rectangle or OverlayTool.Freehand;
+        bool isText = _tool == OverlayTool.Text;
+
+        OptionsSeparator.Visibility = usesColor ? Visibility.Visible : Visibility.Collapsed;
+        ColorButton.Visibility = usesColor ? Visibility.Visible : Visibility.Collapsed;
+        ThicknessPanel.Visibility = usesStroke ? Visibility.Visible : Visibility.Collapsed;
+        TextSizePanel.Visibility = isText ? Visibility.Visible : Visibility.Collapsed;
+
+        if (!usesColor && ColorPopup.IsOpen)
+        {
+            ColorPopup.IsOpen = false;
+        }
+    }
+
+    private void OnColorButtonClick(object sender, RoutedEventArgs e)
+    {
+        // When the popup is open, the click first closes it (StaysOpen=False); the
+        // suppression flag stops this same click from immediately reopening it.
+        if (!_suppressColorReopen)
+        {
+            ColorPopup.IsOpen = true;
+        }
+    }
+
+    private void OnColorPopupClosed(object? sender, EventArgs e)
+    {
+        _suppressColorReopen = true;
+        Dispatcher.BeginInvoke(
+            System.Windows.Threading.DispatcherPriority.Input,
+            new Action(() => _suppressColorReopen = false));
+    }
+
+    private void OnPickerColorChanged(object? sender, EventArgs e)
+    {
+        Color c = ColorPickerControl.SelectedColor;
+        _currentColor = new ArgbColor(c.A, c.R, c.G, c.B);
+        ColorSwatch.Background = new SolidColorBrush(c);
+    }
+
+    private void OnThicknessChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        _currentThickness = e.NewValue;
+        if (ThicknessValue is not null)
+        {
+            ThicknessValue.Text = FormatValue(e.NewValue);
+        }
+    }
+
+    private void OnTextSizeChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        _currentTextSize = e.NewValue;
+        if (TextSizeValue is not null)
+        {
+            TextSizeValue.Text = FormatValue(e.NewValue);
+        }
+    }
+
+    private static string FormatValue(double value) =>
+        ((int)Math.Round(value)).ToString(CultureInfo.InvariantCulture);
+
+    private static Color ToMediaColor(ArgbColor c) => Color.FromArgb(c.A, c.R, c.G, c.B);
+
     // --- Mouse selection / manipulation / drawing ---
 
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
     {
         base.OnMouseLeftButtonDown(e);
+
+        // If this same click just dismissed the open color popup, consume it so it
+        // doesn't also start drawing an annotation. The flag is only set for the one
+        // input cycle in which the popup closed.
+        if (_suppressColorReopen)
+        {
+            return;
+        }
 
         // A click anywhere while typing confirms the current text and consumes the click.
         if (_annotations.IsEditingText)
@@ -224,6 +362,24 @@ public partial class OverlayWindow : Window
         }
 
         BeginSelectionDraw(px, py);
+    }
+
+    /// <summary>
+    /// Selects the whole active monitor without dragging (RF-5). The selection becomes
+    /// editable (handles/toolbar) exactly as a dragged one, so the user can still annotate.
+    /// </summary>
+    private void SelectFullMonitor()
+    {
+        if (_annotations.IsEditingText)
+        {
+            _annotations.CommitText();
+        }
+
+        _mode = DragMode.None;
+        _selection = _capture.PhysicalBounds;
+        _hasSelection = true;
+        UpdateVisuals();
+        Keyboard.Focus(this);
     }
 
     private void BeginSelectionDraw(int px, int py)
@@ -318,11 +474,22 @@ public partial class OverlayWindow : Window
             return;
         }
 
+        // A focused text field (e.g. the hex input in the color popup) owns its
+        // keystrokes; single-key tool shortcuts must not fire while typing into it.
+        if (Keyboard.FocusedElement is TextBox)
+        {
+            return;
+        }
+
         bool ctrl = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
         if (ctrl)
         {
             switch (e.Key)
             {
+                case Key.A:
+                    SelectFullMonitor();
+                    e.Handled = true;
+                    return;
                 case Key.Z:
                     _annotations.Undo();
                     e.Handled = true;
@@ -339,6 +506,14 @@ public partial class OverlayWindow : Window
 
                     e.Handled = true;
                     return;
+                case Key.S:
+                    if (_hasSelection && SelectionGeometry.IsValidSize(_selection))
+                    {
+                        ConfirmAndSave();
+                    }
+
+                    e.Handled = true;
+                    return;
             }
 
             return;
@@ -347,7 +522,16 @@ public partial class OverlayWindow : Window
         switch (e.Key)
         {
             case Key.Escape:
-                Close();
+                // Esc dismisses an open color popup first; otherwise it cancels capture.
+                if (ColorPopup.IsOpen)
+                {
+                    ColorPopup.IsOpen = false;
+                }
+                else
+                {
+                    Close();
+                }
+
                 break;
             case Key.Enter:
                 if (_hasSelection && SelectionGeometry.IsValidSize(_selection))
@@ -405,6 +589,11 @@ public partial class OverlayWindow : Window
     private void UpdateVisuals()
     {
         var full = new Rect(0, 0, ActualWidth, ActualHeight);
+
+        // The hint is only useful until a selection exists (RF-5).
+        HintBar.Visibility = _hasSelection && !_selection.IsEmpty
+            ? Visibility.Collapsed
+            : Visibility.Visible;
 
         if (_hasSelection && !_selection.IsEmpty)
         {
@@ -536,12 +725,83 @@ public partial class OverlayWindow : Window
 
     // --- Export ---
 
+    private void OnCopyClick(object sender, RoutedEventArgs e)
+    {
+        if (_hasSelection && SelectionGeometry.IsValidSize(_selection))
+        {
+            ConfirmAndCopy();
+        }
+    }
+
+    private void OnSaveClick(object sender, RoutedEventArgs e)
+    {
+        if (_hasSelection && SelectionGeometry.IsValidSize(_selection))
+        {
+            ConfirmAndSave();
+        }
+    }
+
+    private void OnCloseClick(object sender, RoutedEventArgs e) => Close();
+
     private void ConfirmAndCopy()
     {
         // Flush any text still being typed so it lands in the exported image.
         _annotations.CommitText();
         var bmp = ComposeForExport();
         CopyToClipboardWithRetry(bmp);
+        Close();
+    }
+
+    /// <summary>
+    /// Saves the composed image to disk (RF-15, RF-16, RF-17). Shows the system Save
+    /// dialog with a time-stamped default name and PNG/JPG filters; closes the overlay
+    /// only on a successful write. Cancelling or a write error keeps the overlay open.
+    /// </summary>
+    private void ConfirmAndSave()
+    {
+        // Flush any text still being typed so it lands in the exported image.
+        _annotations.CommitText();
+
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = Strings.SaveDialogTitle,
+            FileName = ExportNaming.DefaultFileName(DateTime.Now, _defaultFormat),
+            DefaultExt = ExportNaming.ExtensionFor(_defaultFormat),
+            AddExtension = true,
+            OverwritePrompt = true,
+            Filter = $"{Strings.SaveFilterPng}|*.png|{Strings.SaveFilterJpeg}|*.jpg;*.jpeg",
+            // Pre-select the user's preferred default format (RF-16). FilterIndex is 1-based.
+            FilterIndex = _defaultFormat == ImageExportFormat.Jpeg ? 2 : 1,
+        };
+
+        // The overlay is topmost; drop that while the modal dialog is up so it isn't
+        // hidden behind the full-screen overlay, then restore it if the user cancels.
+        bool wasTopmost = Topmost;
+        Topmost = false;
+        bool? confirmed = dialog.ShowDialog(this);
+        Topmost = wasTopmost;
+
+        if (confirmed != true)
+        {
+            return; // Cancelled: keep the overlay open for further editing.
+        }
+
+        try
+        {
+            System.Windows.Media.Imaging.BitmapSource image = ComposeForExport();
+            ImageExporter.Save(
+                image, dialog.FileName, ExportNaming.FormatFromExtension(dialog.FileName), _jpegQuality);
+        }
+        catch (Exception ex)
+        {
+            // A failed write (permissions, locked file, full disk) must surface, not
+            // crash; keep the overlay open so the user can retry or pick another path.
+            Trace.TraceError($"Zass: save failed: {ex}");
+            MessageBox.Show(this, Strings.SaveErrorMessage, Strings.HotkeyConflictTitle,
+                MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
         Close();
     }
 

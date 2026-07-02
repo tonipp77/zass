@@ -1,0 +1,85 @@
+<Window x:Class="Zass.App.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        SizeToContent="WidthAndHeight"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
+        ShowInTaskbar="True"
+        FontFamily="Segoe UI" FontSize="13">
+
+    <Window.Resources>
+        <Style TargetType="TextBlock" x:Key="FieldLabel">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,0,16,0" />
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="260" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Language -->
+        <TextBlock x:Name="LanguageLabel" Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldLabel}" />
+        <ComboBox x:Name="LanguageCombo" Grid.Row="0" Grid.Column="1" Margin="0,0,0,12"
+                  SelectionChanged="OnLanguageChanged" />
+
+        <!-- Default save format -->
+        <TextBlock x:Name="FormatLabel" Grid.Row="1" Grid.Column="0" Style="{StaticResource FieldLabel}" />
+        <ComboBox x:Name="FormatCombo" Grid.Row="1" Grid.Column="1" Margin="0,0,0,12" />
+
+        <!-- JPEG quality -->
+        <TextBlock x:Name="QualityLabel" Grid.Row="2" Grid.Column="0" Style="{StaticResource FieldLabel}" />
+        <Grid Grid.Row="2" Grid.Column="1" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Slider x:Name="QualitySlider" Grid.Column="0" VerticalAlignment="Center"
+                    Minimum="1" Maximum="100" IsSnapToTickEnabled="True" TickFrequency="1"
+                    ValueChanged="OnQualityChanged" />
+            <TextBlock x:Name="QualityValue" Grid.Column="1" Width="32" TextAlignment="Right"
+                       VerticalAlignment="Center" Margin="8,0,0,0" />
+        </Grid>
+
+        <!-- Start with Windows -->
+        <CheckBox x:Name="StartupCheck" Grid.Row="3" Grid.Column="1" Margin="0,0,0,14"
+                  VerticalContentAlignment="Center" />
+
+        <!-- Capture shortcut (RF-2): click the box and press a combination -->
+        <TextBlock x:Name="HotkeyLabel" Grid.Row="4" Grid.Column="0" Style="{StaticResource FieldLabel}"
+                   VerticalAlignment="Top" Margin="0,5,16,0" />
+        <StackPanel Grid.Row="4" Grid.Column="1" Margin="0,0,0,18">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="HotkeyCapture" Grid.Column="0" IsReadOnly="True" IsReadOnlyCaretVisible="False"
+                         Cursor="Hand" TextAlignment="Center" FontWeight="SemiBold" Padding="4,4"
+                         PreviewKeyDown="OnHotkeyCaptureKeyDown" />
+                <Button x:Name="HotkeyReset" Grid.Column="1" MinWidth="84" Height="28" Margin="8,0,0,0"
+                        Click="OnHotkeyResetClick" />
+            </Grid>
+            <TextBlock x:Name="HotkeyHint" Foreground="Gray" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap" />
+        </StackPanel>
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2"
+                    Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button x:Name="SaveButton" MinWidth="88" Height="28" IsDefault="True"
+                    Click="OnSaveClick" />
+            <Button x:Name="CancelButton" MinWidth="88" Height="28" Margin="10,0,0,0" IsCancel="True"
+                    Click="OnCancelClick" />
+        </StackPanel>
+    </Grid>
+</Window>

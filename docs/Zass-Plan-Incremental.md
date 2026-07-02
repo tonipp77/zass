@@ -124,24 +124,126 @@ delicadeza, **texto** con gestión de foco (escritura vs. atajos de herramienta)
     su UI llega en el Incremento 5. La **selección/movimiento/borrado de anotaciones** con el
     puntero (RF-11 en presentación) sigue diferida a un incremento posterior.
 
-### ⬜ Incremento 5 — Color y grosor
+### ✅ Incremento 5 — Color y grosor
 Paleta rápida + selector de color completo; grosor de trazo y tamaño de texto. Persistencia
 del último valor dentro de la sesión de overlay.
 - **Cubre:** RF-9, RF-10
+- **Estado:** Completado y validado por el usuario (compila sin avisos; 62 tests en verde).
+- **Decisiones confirmadas por el usuario:**
+  - **Selector de color completo = popup WPF propio** (no `ColorDialog` de WinForms): evita
+    añadir WinForms y un diálogo nativo que quedaría detrás del overlay topmost. Control nuevo
+    `ColorPicker` (UserControl): paleta rápida de 12 colores + área saturación/brillo + barra de
+    tono + campo hex. HSV↔RGB propios, cero dependencias nuevas.
+  - **Grosor y tamaño = sliders de rango completo** (1–20 px de trazo; 8–72 de texto), fieles
+    al PRD, con el valor numérico visible.
+- **Notas de diseño / alcance:**
+  - Los controles de opciones se muestran **según la herramienta activa**: color para todas las
+    de dibujo y texto; grosor para flecha/rectángulo/libre (el relleno no tiene trazo); tamaño
+    solo para texto. La barra se reancla al cambiar de ancho.
+  - **Persistencia dentro de la sesión:** `_currentColor`/`_currentThickness`/`_currentTextSize`
+    son campos de la ventana; el último valor se mantiene entre anotaciones hasta cerrar el
+    overlay. La persistencia **entre sesiones** (a `settings.json`) es del Incremento 7.
+  - **Foco de teclado:** el campo hex es un `TextBox`; mientras tiene el foco la ventana ignora
+    los atajos de una tecla (misma regla que el texto en línea del Incremento 4). Esc cierra
+    primero el popup de color; si no hay popup, cancela la captura.
+  - El cambio de color/grosor afecta solo a las **nuevas** anotaciones (no hay anotación
+    seleccionada todavía; la selección/edición de anotaciones con el puntero sigue diferida).
+  - El botón de color es un toggle "manual": un flag de una sola pasada evita que el clic que
+    cierra el popup lo reabra o inicie un dibujo por debajo.
 
-### ⬜ Incremento 6 — Exportación completa
+### ✅ Incremento 6 — Exportación completa
 Composición con `RenderTargetBitmap` **excluyendo capas auxiliares** (oscurecimiento,
 tiradores, marcos), recorte a la selección, fidelidad píxel a píxel. Guardar a disco con
 `SaveFileDialog`, PNG/JPG y nombre por defecto con marca temporal.
 - **Cubre:** RF-14, RF-15, RF-16, RF-17 · Arquitectura §8
+- **Estado:** Completado y validado por el usuario (compila sin avisos; 71 tests en verde).
 - **Nota:** el copiar al portapapeles ya existe desde el Incremento 0; aquí se asegura la
   fidelidad y se añade el guardado a disco.
+- **Notas de diseño / alcance:**
+  - **Guardado a disco (RF-15/16/17):** botón Guardar y atajo **Ctrl+S** abren
+    `Microsoft.Win32.SaveFileDialog` (WPF, sin WinForms) con filtros PNG/JPG y nombre por
+    defecto `Zass_yyyy-MM-dd_HHmmss.png`. El overlay baja `Topmost` mientras el diálogo
+    modal está abierto para que no quede oculto tras la pantalla congelada, y lo restaura si
+    el usuario cancela. Solo se cierra el overlay tras una escritura correcta; un error de
+    escritura se notifica por la UI y mantiene el overlay abierto.
+  - **Composición reutilizada:** copiar y guardar comparten `ComposeForExport()` (fondo
+    recortado + anotaciones dentro de la selección, capas auxiliares excluidas por diseño).
+  - **Naming UI-agnóstico testeable:** `Zass.Core.Export.ExportNaming` (nombre por defecto +
+    formato según extensión) vive en `Zass.Core` sin WPF; la codificación PNG/JPG
+    (`PngBitmapEncoder`/`JpegBitmapEncoder`) vive en `Zass.App.Imaging.ImageExporter` para
+    mantener `Zass.Core` libre de WPF (misma decisión que en el Incremento 1).
+  - **Barra completada (PRD §6):** se añadieron los botones **Copiar**, **Guardar** y
+    **Cancelar**, siempre visibles, además de los atajos ya existentes (Ctrl+C/Enter, Esc).
+  - **Calidad JPG** fija en 90 por ahora; su configuración en Ajustes llega en el Incremento 7.
+  - **Gap detectado fuera de alcance:** RF-5 (seleccionar el monitor completo sin arrastrar)
+    no está asignado a ningún incremento del plan; queda pendiente de ubicar (no es de este).
 
-### ⬜ Incremento 7 — Producto: bandeja, ajustes, i18n y persistencia
+### ✅ Incremento 7 — Producto: bandeja, ajustes, i18n y persistencia
 Menú de bandeja completo (Capturar, Ajustes, Acerca de, Salir), pantalla de Ajustes,
-localización es/en conmutable en caliente (`ResourceDictionary`), persistencia JSON en
+localización es/en conmutable en caliente, persistencia JSON en
 `%APPDATA%\Zass\settings.json`, arranque con Windows (clave Run HKCU).
 - **Cubre:** RF-18, RF-19, RF-20, RF-21 · Arquitectura §9, §10
+- **Estado:** Completado y validado por el usuario (compila sin avisos; 96 tests en verde).
+- **Decisiones confirmadas por el usuario:**
+  - **Atajo configurable.** En el Incremento 7 el atajo se entregó fijo en Ctrl+Shift+S
+    (solo lectura) por decisión del usuario; la reconfiguración (**RF-2**) se implementó
+    inmediatamente después como cierre de gap (ver *Gaps cerrados* más abajo). El descriptor
+    del atajo se persiste en `settings.json`.
+- **Notas de diseño / alcance:**
+  - **Persistencia (`Zass.Core.Settings`, sin WPF, testeable):** `AppSettings` (idioma,
+    formato por defecto, calidad JPG, arranque con Windows, atajo, último color/grosor/
+    tamaño) + `SettingsStore` (carga/guarda JSON con `System.Text.Json` en
+    `%APPDATA%\Zass\settings.json`). `Normalize()` recorta valores fuera de rango y
+    resetea enums/atajo inválidos, de modo que un archivo corrupto o editado a mano nunca
+    introduce valores inválidos; un archivo ausente o ilegible cae a valores por defecto
+    sin romper el arranque. El color se serializa como entero empaquetado 0xAARRGGBB.
+  - **i18n conmutable en caliente:** se mantiene el enfoque de satélites `.resx` del
+    Incremento 0 (en lugar de los `ResourceDictionary` que **recomienda** la Arquitectura
+    §9). `LocalizationManager` cambia `CurrentUICulture` y emite `LanguageChanged`; la
+    bandeja y la ventana de Ajustes refrescan sus textos en vivo y el overlay (que se
+    recrea por captura) toma el idioma actual. Esto cumple RF-20 (sin reiniciar) sin
+    reescribir la capa de localización ya validada. El idioma "Sistema" se resuelve contra
+    la cultura del SO capturada al arrancar (es→es, resto→inglés neutro).
+  - **Ventana de Ajustes (code-behind, como el resto de la UI):** idioma (Sistema/English/
+    Español, con **previsualización en vivo** y revertido al cancelar), formato por defecto
+    (PNG/JPG), calidad JPG (slider 1–100), iniciar con Windows, y el atajo en solo lectura.
+    Los valores se persisten **solo al pulsar Guardar**; un error de escritura se notifica
+    por la UI y mantiene la ventana abierta.
+  - **Arranque con Windows (RF-19):** `WindowsStartup` gestiona el valor `Zass` en
+    `HKCU\…\Run` (sin permisos de administrador). En cada arranque se reconcilia la clave
+    con la preferencia persistida (reescribe la ruta del ejecutable si la app se movió).
+  - **Acerca de:** ventana modal sencilla con nombre, versión (leída del ensamblado) y
+    descripción, localizada.
+  - **Menú de bandeja completo (RF-18):** Capturar ahora · Ajustes · Acerca de · Salir,
+    reconstruido al cambiar de idioma.
+  - **Último color/grosor/tamaño entre sesiones (RF-21):** el overlay se siembra desde los
+    ajustes y, al cerrarse, devuelve los últimos valores usados, que se guardan en disco.
+  - **Calidad JPG configurable:** `ImageExporter.Save` recibe la calidad desde los ajustes
+    (antes fija en 90); el formato por defecto preselecciona el filtro del diálogo Guardar.
+
+### ✅ Gaps cerrados — RF-2 (atajo configurable) y RF-5 (captura de pantalla completa)
+Dos requisitos del PRD que el plan no había asignado a ningún incremento, implementados
+tras validar el Incremento 7.
+- **Cubre:** RF-2, RF-5 · PRD §4.1 · Arquitectura §3
+- **Estado:** Completado y validado por el usuario (compila sin avisos; 120 tests en verde).
+- **Notas de diseño / alcance:**
+  - **RF-2 — Atajo reconfigurable sin reiniciar:** modelo `Hotkey` (modificadores + tecla)
+    en `Zass.Core.Hotkeys`, UI-agnóstico y testeable: formato/parseo canónico
+    (`Ctrl+Shift+S`), validación (tecla conocida + exige modificador salvo F1–F24/Impr Pant)
+    y tabla bidireccional VK↔nombre (`HotkeyKeys`). `HotkeyManager` pasa de registro fijo a
+    `TryApply(Hotkey)`: desregistra el anterior, registra el nuevo y, si la combinación está
+    ocupada o es inválida, **restaura el anterior** y devuelve `false` (Arquitectura §3.2).
+    En Ajustes, un campo "captura" graba la combinación pulsada (`KeyInterop` → VK), con
+    botón **Restablecer**; al Guardar se aplica en caliente y solo entonces se persiste. Una
+    combinación en uso se avisa por la UI y mantiene el atajo previo. El descriptor se
+    guarda en `settings.json` y se aplica al arrancar (con *fallback* al de por defecto si
+    el guardado está corrupto).
+  - **RF-5 — Capturar el monitor completo sin arrastrar:** atajo **Ctrl+A** dentro del
+    overlay selecciona todo el monitor activo (en píxeles físicos) dejando la selección
+    editable como cualquier otra. Se añadió una **pista** discreta antes de seleccionar
+    ("Arrastra para seleccionar · Ctrl+A: monitor completo · Esc: cancelar"), no interactiva
+    para no interceptar clics. Nota: este Ctrl+A es un atajo **interno del overlay**,
+    independiente del atajo global de captura (RF-1/RF-2).
 
 ### ⬜ Incremento 8 — Empaquetado y distribución
 Instalador Inno Setup y/o build portable self-contained. Firma de código diferida a v2.
