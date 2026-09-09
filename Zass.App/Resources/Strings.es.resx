@@ -202,4 +202,28 @@
   <data name="AboutClose" xml:space="preserve">
     <value>Cerrar</value>
   </data>
+  <data name="ToolLine" xml:space="preserve"><value>Línea (L)</value></data>
+  <data name="ToolCollage" xml:space="preserve"><value>Añadir recorte al collage</value></data>
+  <data name="CollageTitle" xml:space="preserve"><value>Collage</value></data>
+  <data name="CollageHint" xml:space="preserve"><value>Arrastra los recortes para colocarlos. Se conserva su resolución original y los espacios se exportan en blanco. Cierra u oculta para continuar durante esta sesión.</value></data>
+  <data name="CollageCapture" xml:space="preserve"><value>Nueva captura</value></data>
+  <data name="CollageRemove" xml:space="preserve"><value>Quitar objeto</value></data>
+  <data name="CollageUndo" xml:space="preserve"><value>Deshacer</value></data>
+  <data name="CollageRedo" xml:space="preserve"><value>Rehacer</value></data>
+  <data name="CollageClear" xml:space="preserve"><value>Vaciar lienzo</value></data>
+  <data name="CollageCopy" xml:space="preserve"><value>Terminar y copiar</value></data>
+  <data name="CollageSave" xml:space="preserve"><value>Terminar y guardar</value></data>
+  <data name="CollageHide" xml:space="preserve"><value>Ocultar</value></data>
+  <data name="CollageZoom" xml:space="preserve"><value>Zoom</value></data>
+  <data name="CollageStatus" xml:space="preserve"><value>{0} objetos · Salida: {1} × {2} px</value></data>
+  <data name="CollageCopyError" xml:space="preserve"><value>No se pudo copiar el collage. Inténtalo de nuevo; se conservan tus recortes.</value></data>
+  <data name="CollageAddError" xml:space="preserve"><value>No se pudo añadir el recorte. El lienzo y los recortes retenidos (incluido el historial) tienen un límite de 64 millones de píxeles, con un lado máximo de 32767 píxeles. Termina el collage actual o utiliza un recorte más pequeño.</value></data>
+  <data name="ToolPixelation" xml:space="preserve"><value>Pixelar (P)</value></data>
+  <data name="LabelPixelSize" xml:space="preserve"><value>Bloques</value></data>
+  <data name="CollagePointer" xml:space="preserve"><value>Seleccionar / mover</value></data>
+  <data name="CollageCurvedArrow" xml:space="preserve"><value>Flecha curva</value></data>
+  <data name="CollageStraightArrow" xml:space="preserve"><value>Flecha recta</value></data>
+  <data name="CollageElbowArrow" xml:space="preserve"><value>Flecha acodada</value></data>
+  <data name="CollageAnnotationError" xml:space="preserve"><value>El objeto supera los límites del lienzo. Utiliza una flecha o un texto más corto.</value></data>
+  <data name="CollageText" xml:space="preserve"><value>Texto</value></data>
 </root>

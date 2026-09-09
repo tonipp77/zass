@@ -253,6 +253,26 @@ Instalador Inno Setup y/o build portable self-contained. Firma de código diferi
 
 ## Hito v1
 
+### 🔄 Ampliación feature-1 — Línea y collage libre
+
+- **Solicitud:** Toni, 2026-09-08. Se desarrolla en `feature-1`, conservando el trabajo
+  local previo de empaquetado. Esta petición es independiente de validar el Incremento 8.
+- **Implementado:** línea (L), color/grosor e historial; añadir selección anotada al
+  collage; lienzo libre con zoom, quitar/vaciar, undo/redo; nuevas capturas, recuperación
+  desde bandeja y finalización mediante copia o PNG/JPG.
+- **Decisiones confirmadas:** disposición libre y conservación en memoria durante la sesión.
+- **Ampliación posterior solicitada:** tres flechas de collage (curva, recta, acodada),
+  texto, color/tamaño e historial compartido con imágenes; herramienta de pixelado (P)
+  de recortes con bloques configurables e historial de objeto completo.
+- **Verificación automática:** compilación sin errores ni avisos; 130 tests unitarios
+  correctos. Verificación adicional WPF de construcción del editor y composición de
+  píxeles con DPI distintos, espacios blancos, solapamiento y exportación tras undo.
+  Comprobaciones WPF adicionales de extremos de flechas en varias direcciones, texto,
+  pixelado a 150% con origen de monitor desplazado y resultado idéntico al rehacer.
+- **Estado:** implementado; commit y push a `feature-1` autorizados expresamente por Toni
+  el 2026-09-09. La validación manual no se ha registrado todavía.
+- **Plan de pruebas:** `Zass-Feature-1-Pruebas.md`.
+
 La v1 se considera completa cuando los Incrementos 1–7 estén validados contra los
 **criterios de aceptación globales del PRD (§10)**. El Incremento 8 es distribución.
 

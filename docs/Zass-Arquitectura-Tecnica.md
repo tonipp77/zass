@@ -309,3 +309,51 @@ Separar `Zass.Core` sin dependencia de WPF facilita las pruebas del modelo de an
 - Gestionar con cuidado el foco de teclado durante la edición de texto para no romper los atajos ni la escritura.
 - Liberar todos los recursos gráficos al cerrar el overlay; verificar ausencia de fugas en ciclos repetidos.
 - Donde el PRD deja una decisión abierta (comportamiento de las anotaciones al redimensionar la selección, sección 9 del PRD), implementar la opción propuesta (posición absoluta, recorte si quedan fuera) salvo indicación contraria.
+
+## 16. Ampliación feature-1: línea y collage
+
+- `LineAnnotation` sigue el modelo vectorial de la flecha y se materializa como `Line`
+  en `AnnotationCanvasController`. Comparte el flujo de borrador y `AddAnnotationCommand`.
+- `Zass.Core.Collage.CollageDocument` almacena identificadores y rectángulos en píxeles
+  físicos, sin WPF. Usa el historial Command existente con estados inmutables para añadir,
+  mover, quitar y vaciar. Valida dimensiones y superficie antes de modificar el documento.
+- `CollageWindow` conserva los bitmaps por identificador, incluidos los necesarios para
+  deshacer. Los libera al finalizar la sesión. Cerrar la ventana normalmente la oculta;
+  una exportación correcta termina la sesión. No se añaden dependencias.
+- El lienzo presenta una unidad por píxel de imagen antes de aplicar el zoom mediante
+  `LayoutTransform`; las coordenadas del ratón se leen respecto al lienzo transformado y
+  se redondean a píxeles enteros. El zoom no modifica el modelo ni la resolución exportada.
+- `CollageComposer` crea un visual separado con fondo blanco y bitmaps a tamaño original,
+  ajustado a la unión de recortes y renderizado a 96 DPI. No utiliza el lienzo del editor,
+  por lo que nunca incluye sus marcos o su espacio auxiliar. Mantiene el orden de inserción.
+- `App` es propietario de la ventana de collage. Oculta la ventana antes de capturar,
+  cede 150 ms para repintar el escritorio y bloquea capturas reentrantes durante ese paso.
+  El overlay entrega el resultado de `ComposeForExport()` al collage; copiar y guardar
+  directamente mantienen el flujo existente. La ventana se puede recuperar desde la bandeja.
+- La copia del collage reintenta de forma asíncrona cuando el portapapeles está ocupado.
+  Los errores se registran y se notifican, conservando la sesión para volver a intentarlo.
+
+### Anotaciones de collage y efecto de pixelado
+
+- `CollageItem` admite una decoración inmutable con tipo, geometría local, color,
+  tamaño y texto. Usa el mismo historial de estados que los recortes; mover cambia el
+  rectángulo del objeto manteniendo la geometría local. Los límites de exportación
+  incluyen todos los objetos. `CollageDecorationRenderer` produce el mismo `Drawing`
+  tanto para la imagen vectorial de previsualización como para `CollageComposer`.
+- Las flechas curva, recta y acodada se construyen como geometrías WPF. El texto utiliza
+  `FormattedText` con Segoe UI. Los objetos siguen siendo independientes hasta exportar;
+  la composición nunca incorpora el editor de texto ni el marco de selección.
+- El collage confirma los borradores antes de ocultarse, iniciar una captura o exportar.
+  El editor de texto conserva el control de las teclas mientras está activo. Una vez
+  confirmado, texto y flechas participan en el historial cronológico del documento.
+- `PixelationAnnotation` conserva el rectángulo y el tamaño de bloque en píxeles físicos.
+  `PixelationEffect` es el algoritmo puro de promediado BGRA, probado con bloques parciales
+  y stride con padding. No añade dependencias WPF a Core.
+- Al comenzar un pixelado se compone una instantánea del fondo y las anotaciones ya
+  confirmadas, excluyendo el oscurecimiento y todos los controles. `PixelationRenderer`
+  recorta esa instantánea y genera el efecto durante el arrastre. El controlador conserva
+  solo el bitmap resultante de cada rectángulo para reproducirlo idénticamente al rehacer;
+  libera la instantánea completa al confirmar y los efectos del historial redo descartado
+  al crear un nuevo comando. El bitmap no modifica el fondo original del overlay.
+- Los atajos de teclado confirman un trazo activo una sola vez antes de ejecutar acciones,
+  evitando incluir borradores sin confirmar al exportar o duplicar operaciones de historial.

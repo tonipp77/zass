@@ -266,3 +266,60 @@ La v1 se considera completa cuando:
 - Selector de fuente para texto; más herramientas (numeración de pasos, resaltado, desenfoque/pixelado, recorte posterior).
 - Autoactualización y firma de código.
 - Captura de vídeo/GIF.
+
+## 13. Ampliación solicitada: feature-1 (2026-09-08)
+
+Esta petición amplía el conjunto de herramientas y destinos de exportación de v1.
+No incluye recortar posteriormente una imagen importada: cada recorte se obtiene mediante
+la selección de pantalla existente, con sus anotaciones confirmadas.
+
+- **RF-22 — Línea:** segmento sin punta, dibujado por arrastre, con el mismo selector de
+  color y grosor de 1–20 píxeles que la flecha. Botón propio y atajo L. Una línea completa
+  equivale a un comando: Ctrl+Z la elimina y Ctrl+Y la restaura con su estilo.
+- **RF-23 — Destino del recorte:** tras seleccionar y anotar, el usuario elige Copiar,
+  Guardar o Añadir recorte al collage. Añadir cierra el overlay solo tras aceptar el recorte.
+- **RF-24 — Collage libre:** ventana con recortes movibles por arrastre, conservando sus
+  dimensiones originales. Nuevos recortes se colocan debajo de los existentes; en
+  solapamientos, los añadidos después quedan delante. Permite quitar, vaciar y deshacer/
+  rehacer; cada movimiento se registra una vez al soltar. Zoom solo de visualización.
+- **RF-25 — Sesión y salida:** el collage persiste en memoria mientras Zass siga abierto.
+  Cerrar/ocultar la ventana permite continuar desde el menú de bandeja. Nueva captura
+  oculta el collage antes de capturar. Cancelar una captura conserva el collage anterior.
+  Terminar y copiar / Terminar y guardar exportan una sola imagen y cierran la sesión
+  únicamente tras el éxito. Cancelar Guardar o un error de exportación conserva el trabajo.
+  Formatos PNG/JPG, con las preferencias de exportación existentes.
+- **Salida:** unión rectangular ajustada a los recortes, espacios blancos y resolución
+  original, sin zoom, marcos de selección ni controles. No hay persistencia de proyecto
+  entre ejecuciones. Límite técnico de 64 millones de píxeles en la composición y en los
+  recortes retenidos con su historial; dimensión máxima 32767 píxeles por lado.
+
+**Decisiones confirmadas por Toni:** lienzo libre y conservación solo durante la sesión.
+**Aceptación:** ejecutar `Zass-Feature-1-Pruebas.md`; pendiente de validación manual.
+
+### Ampliación de collage y pixelado
+
+- **RF-26 — Flechas en collage:** tres estilos vectoriales rellenos: curva con cola
+  afinada (referencia aportada por Toni), recta y acodada. El clic inicia la flecha;
+  arrastrar con el botón izquierdo muestra la previsualización y soltar confirma el
+  objeto con la punta en el extremo del arrastre. Color y grosor configurables para
+  nuevas flechas. Un clic sin arrastre no añade nada.
+- **RF-27 — Texto en collage:** seleccionar Texto y hacer clic para escribir en el
+  lienzo, con color y tamaño configurables. Enter, Esc o clic fuera confirman el texto;
+  el texto vacío se descarta. Mientras se escribe, Ctrl+Z/Ctrl+Y pertenecen al editor;
+  tras confirmar actúan sobre el objeto completo. Antes de capturar/exportar se confirma
+  el texto pendiente.
+- **RF-28 — Historial único:** recortes, flechas, texto, movimientos y borrados comparten
+  un único historial cronológico. Ctrl+Z/Ctrl+Y eliminan/restauran objetos completos con
+  su estilo y posición. Seleccionar/mover y Quitar objeto funcionan también con flechas
+  y texto. Se exportan todos los objetos en su orden de inserción, incluidos los situados
+  fuera de los recortes. Las flechas no se anclan automáticamente al mover las imágenes.
+- **RF-29 — Pixelado en recortes:** herramienta Pixelar (P). Arrastrar define un
+  rectángulo cuyo contenido se reemplaza por bloques de color medio, incluidas las
+  anotaciones previas situadas debajo. Tamaño de bloque de 8 a 64 píxeles, por defecto 24.
+  El efecto se confirma al soltar, se deshace/rehace completo y se conserva al copiar,
+  guardar o añadir al collage. No depende del color activo. Las anotaciones añadidas
+  después quedan encima del efecto.
+
+El pixelado deja de estar diferido al roadmap posterior para esta rama. Su intensidad
+se debe comprobar visualmente sobre el contenido concreto; no equivale a una redacción
+irreversible de información sensible (para ello existe el rectángulo opaco).

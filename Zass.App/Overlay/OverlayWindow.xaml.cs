@@ -92,16 +92,21 @@ public partial class OverlayWindow : Window
         CreateHandles();
 
         _annotations = new AnnotationCanvasController(AnnotationCanvas, PhysicalPointToDip, _scaleX);
+        _annotations.CaptureUnderlay = ComposePixelationUnderlay;
         _annotations.TextEditCompleted += () => Keyboard.Focus(this);
 
         PointerToolButton.ToolTip = Strings.ToolPointer;
         TextToolButton.ToolTip = Strings.ToolText;
         ArrowToolButton.ToolTip = Strings.ToolArrow;
+        LineToolButton.ToolTip = Strings.ToolLine;
+        PixelationToolButton.ToolTip = Strings.ToolPixelation;
+        PixelSizeLabel.Text = Strings.LabelPixelSize;
         RectangleToolButton.ToolTip = Strings.ToolRectangle;
         FilledRectangleToolButton.ToolTip = Strings.ToolFilledRectangle;
         FreehandToolButton.ToolTip = Strings.ToolFreehand;
         CopyButton.ToolTip = Strings.ToolCopy;
         SaveButton.ToolTip = Strings.ToolSave;
+        CollageButton.ToolTip = Strings.ToolCollage;
         CloseButton.ToolTip = Strings.ToolClose;
         HintText.Text = Strings.OverlayHint;
         PointerToolButton.IsChecked = true;
@@ -121,6 +126,8 @@ public partial class OverlayWindow : Window
 
     /// <summary>The text size in effect when the overlay closed (RF-21).</summary>
     public double LastTextSize => _currentTextSize;
+
+    public event Action<System.Windows.Media.Imaging.BitmapSource>? AddToCollageRequested;
 
     private int HandleHitRadiusPhysical => (int)Math.Round(HandleHitRadiusDip * _scaleX);
 
@@ -167,6 +174,10 @@ public partial class OverlayWindow : Window
 
     private void OnTextToolClick(object sender, RoutedEventArgs e) => SetTool(OverlayTool.Text);
 
+    private void OnLineToolClick(object sender, RoutedEventArgs e) => SetTool(OverlayTool.Line);
+
+    private void OnPixelationToolClick(object sender, RoutedEventArgs e) => SetTool(OverlayTool.Pixelation);
+
     private void OnArrowToolClick(object sender, RoutedEventArgs e) => SetTool(OverlayTool.Arrow);
 
     private void OnRectangleToolClick(object sender, RoutedEventArgs e) => SetTool(OverlayTool.Rectangle);
@@ -176,7 +187,7 @@ public partial class OverlayWindow : Window
     private void OnFreehandToolClick(object sender, RoutedEventArgs e) => SetTool(OverlayTool.Freehand);
 
     private static bool IsDrawingTool(OverlayTool tool) => tool is
-        OverlayTool.Rectangle or OverlayTool.FilledRectangle or OverlayTool.Arrow or OverlayTool.Freehand;
+        OverlayTool.Rectangle or OverlayTool.FilledRectangle or OverlayTool.Arrow or OverlayTool.Line or OverlayTool.Freehand or OverlayTool.Pixelation;
 
     private void SetTool(OverlayTool tool)
     {
@@ -184,6 +195,8 @@ public partial class OverlayWindow : Window
         PointerToolButton.IsChecked = tool == OverlayTool.Pointer;
         TextToolButton.IsChecked = tool == OverlayTool.Text;
         ArrowToolButton.IsChecked = tool == OverlayTool.Arrow;
+        LineToolButton.IsChecked = tool == OverlayTool.Line;
+        PixelationToolButton.IsChecked = tool == OverlayTool.Pixelation;
         RectangleToolButton.IsChecked = tool == OverlayTool.Rectangle;
         FilledRectangleToolButton.IsChecked = tool == OverlayTool.FilledRectangle;
         FreehandToolButton.IsChecked = tool == OverlayTool.Freehand;
@@ -234,14 +247,15 @@ public partial class OverlayWindow : Window
 
     private void UpdateToolOptions()
     {
-        bool usesColor = _tool != OverlayTool.Pointer;
-        bool usesStroke = _tool is OverlayTool.Arrow or OverlayTool.Rectangle or OverlayTool.Freehand;
+        bool usesColor = _tool is not (OverlayTool.Pointer or OverlayTool.Pixelation);
+        bool usesStroke = _tool is OverlayTool.Arrow or OverlayTool.Line or OverlayTool.Rectangle or OverlayTool.Freehand;
         bool isText = _tool == OverlayTool.Text;
 
         OptionsSeparator.Visibility = usesColor ? Visibility.Visible : Visibility.Collapsed;
         ColorButton.Visibility = usesColor ? Visibility.Visible : Visibility.Collapsed;
         ThicknessPanel.Visibility = usesStroke ? Visibility.Visible : Visibility.Collapsed;
         TextSizePanel.Visibility = isText ? Visibility.Visible : Visibility.Collapsed;
+        PixelSizePanel.Visibility = _tool == OverlayTool.Pixelation ? Visibility.Visible : Visibility.Collapsed;
 
         if (!usesColor && ColorPopup.IsOpen)
         {
@@ -338,7 +352,8 @@ public partial class OverlayWindow : Window
         {
             _mode = DragMode.DrawingAnnotation;
             (int sx, int sy) = ClampToBounds(px, py);
-            _annotations.BeginDraft(_tool, new PhysicalPoint(sx, sy), _currentColor, _currentThickness);
+            _annotations.BeginDraft(_tool, new PhysicalPoint(sx, sy), _currentColor,
+                _tool == OverlayTool.Pixelation ? PixelSizeSlider.Value : _currentThickness);
             CaptureMouse();
             return;
         }
@@ -481,6 +496,14 @@ public partial class OverlayWindow : Window
             return;
         }
 
+        // Keyboard actions finish the current stroke once, so history/export never sees a draft.
+        if (_mode == DragMode.DrawingAnnotation && e.Key is not (Key.LeftCtrl or Key.RightCtrl or Key.LeftShift or Key.RightShift or Key.LeftAlt or Key.RightAlt))
+        {
+            _mode = DragMode.None;
+            _annotations.CommitDraft();
+            ReleaseMouseCapture();
+        }
+
         bool ctrl = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
         if (ctrl)
         {
@@ -548,6 +571,12 @@ public partial class OverlayWindow : Window
                 break;
             case Key.A:
                 SetTool(OverlayTool.Arrow);
+                break;
+            case Key.L:
+                SetTool(OverlayTool.Line);
+                break;
+            case Key.P:
+                SetTool(OverlayTool.Pixelation);
                 break;
             case Key.R:
                 SetTool(OverlayTool.Rectangle);
@@ -743,6 +772,23 @@ public partial class OverlayWindow : Window
 
     private void OnCloseClick(object sender, RoutedEventArgs e) => Close();
 
+    private void OnCollageClick(object sender, RoutedEventArgs e)
+    {
+        if (!_hasSelection || !SelectionGeometry.IsValidSize(_selection) || AddToCollageRequested is null) return;
+        try
+        {
+            _annotations.CommitText();
+            AddToCollageRequested.Invoke(ComposeForExport());
+            Close();
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError($"Zass: could not add crop to collage: {ex}");
+            MessageBox.Show(this, Strings.CollageAddError, Strings.CollageTitle,
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
     private void ConfirmAndCopy()
     {
         // Flush any text still being typed so it lands in the exported image.
@@ -811,6 +857,25 @@ public partial class OverlayWindow : Window
     /// handles, border, toolbar) live on other canvases and are excluded by design.
     /// Full pixel-fidelity verification and disk save come in Increment 6.
     /// </summary>
+    private System.Windows.Media.Imaging.BitmapSource ComposePixelationUnderlay()
+    {
+        int width = _capture.PhysicalBounds.Width, height = _capture.PhysicalBounds.Height;
+        var annotations = new System.Windows.Media.Imaging.RenderTargetBitmap(
+            width, height, 96 * _scaleX, 96 * _scaleY, PixelFormats.Pbgra32);
+        AnnotationCanvas.UpdateLayout();
+        annotations.Render(AnnotationCanvas);
+        var visual = new DrawingVisual();
+        using (DrawingContext dc = visual.RenderOpen())
+        {
+            dc.DrawImage(BackgroundImage.Source, new Rect(0, 0, width, height));
+            dc.DrawImage(annotations, new Rect(0, 0, width, height));
+        }
+        var result = new System.Windows.Media.Imaging.RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
+        result.Render(visual);
+        result.Freeze();
+        return result;
+    }
+
     private System.Windows.Media.Imaging.BitmapSource ComposeForExport()
     {
         System.Windows.Media.Imaging.BitmapSource background =

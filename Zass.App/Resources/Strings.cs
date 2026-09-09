@@ -16,6 +16,29 @@ internal static class Strings
     private static string Get(string key) =>
         Manager.GetString(key, CultureInfo.CurrentUICulture) ?? key;
 
+    public static string ToolCollage => Get(nameof(ToolCollage));
+    public static string CollageTitle => Get(nameof(CollageTitle));
+    public static string CollageHint => Get(nameof(CollageHint));
+    public static string CollageCapture => Get(nameof(CollageCapture));
+    public static string CollageRemove => Get(nameof(CollageRemove));
+    public static string CollageUndo => Get(nameof(CollageUndo));
+    public static string CollageRedo => Get(nameof(CollageRedo));
+    public static string CollageClear => Get(nameof(CollageClear));
+    public static string CollageCopy => Get(nameof(CollageCopy));
+    public static string CollageSave => Get(nameof(CollageSave));
+    public static string CollageHide => Get(nameof(CollageHide));
+    public static string CollageZoom => Get(nameof(CollageZoom));
+    public static string CollageStatus => Get(nameof(CollageStatus));
+    public static string CollageCopyError => Get(nameof(CollageCopyError));
+    public static string CollageAddError => Get(nameof(CollageAddError));
+    public static string ToolPixelation => Get(nameof(ToolPixelation));
+    public static string CollageText => Get(nameof(CollageText));
+    public static string LabelPixelSize => Get(nameof(LabelPixelSize));
+    public static string CollagePointer => Get(nameof(CollagePointer));
+    public static string CollageCurvedArrow => Get(nameof(CollageCurvedArrow));
+    public static string CollageStraightArrow => Get(nameof(CollageStraightArrow));
+    public static string CollageElbowArrow => Get(nameof(CollageElbowArrow));
+    public static string CollageAnnotationError => Get(nameof(CollageAnnotationError));
     public static string TrayTooltip => Get(nameof(TrayTooltip));
     public static string TrayCapture => Get(nameof(TrayCapture));
     public static string TraySettings => Get(nameof(TraySettings));
@@ -26,6 +49,7 @@ internal static class Strings
     public static string CaptureErrorMessage => Get(nameof(CaptureErrorMessage));
     public static string ToolPointer => Get(nameof(ToolPointer));
     public static string ToolText => Get(nameof(ToolText));
+    public static string ToolLine => Get(nameof(ToolLine));
     public static string ToolArrow => Get(nameof(ToolArrow));
     public static string ToolRectangle => Get(nameof(ToolRectangle));
     public static string ToolFilledRectangle => Get(nameof(ToolFilledRectangle));

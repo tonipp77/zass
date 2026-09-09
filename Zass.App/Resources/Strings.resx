@@ -202,4 +202,28 @@
   <data name="AboutClose" xml:space="preserve">
     <value>Close</value>
   </data>
+  <data name="ToolLine" xml:space="preserve"><value>Line (L)</value></data>
+  <data name="ToolCollage" xml:space="preserve"><value>Add crop to collage</value></data>
+  <data name="CollageTitle" xml:space="preserve"><value>Collage</value></data>
+  <data name="CollageHint" xml:space="preserve"><value>Drag crops to arrange them. Original resolution is preserved; empty spaces export as white. Close or hide to continue later during this session.</value></data>
+  <data name="CollageCapture" xml:space="preserve"><value>New capture</value></data>
+  <data name="CollageRemove" xml:space="preserve"><value>Remove object</value></data>
+  <data name="CollageUndo" xml:space="preserve"><value>Undo</value></data>
+  <data name="CollageRedo" xml:space="preserve"><value>Redo</value></data>
+  <data name="CollageClear" xml:space="preserve"><value>Clear canvas</value></data>
+  <data name="CollageCopy" xml:space="preserve"><value>Finish and copy</value></data>
+  <data name="CollageSave" xml:space="preserve"><value>Finish and save</value></data>
+  <data name="CollageHide" xml:space="preserve"><value>Hide</value></data>
+  <data name="CollageZoom" xml:space="preserve"><value>Zoom</value></data>
+  <data name="CollageStatus" xml:space="preserve"><value>{0} objects · Output: {1} × {2} px</value></data>
+  <data name="CollageCopyError" xml:space="preserve"><value>The collage could not be copied. Try again; your crops are preserved.</value></data>
+  <data name="CollageAddError" xml:space="preserve"><value>The crop could not be added. The canvas and retained crops (including undo history) are limited to 64 million pixels, with a maximum side of 32767 pixels. Finish the current collage or use a smaller crop.</value></data>
+  <data name="ToolPixelation" xml:space="preserve"><value>Pixelate (P)</value></data>
+  <data name="LabelPixelSize" xml:space="preserve"><value>Blocks</value></data>
+  <data name="CollagePointer" xml:space="preserve"><value>Select / move</value></data>
+  <data name="CollageCurvedArrow" xml:space="preserve"><value>Curved arrow</value></data>
+  <data name="CollageStraightArrow" xml:space="preserve"><value>Straight arrow</value></data>
+  <data name="CollageElbowArrow" xml:space="preserve"><value>Elbow arrow</value></data>
+  <data name="CollageAnnotationError" xml:space="preserve"><value>The object exceeds the canvas limits. Use a shorter arrow or text.</value></data>
+  <data name="CollageText" xml:space="preserve"><value>Text</value></data>
 </root>
