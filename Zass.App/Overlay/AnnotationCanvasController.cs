@@ -46,6 +46,7 @@ internal sealed class AnnotationCanvasController
     private PhysicalPoint _editPosition;
     private ArgbColor _editColor;
     private double _editFontSize;
+    private bool _editShadow;
 
     public AnnotationCanvasController(Canvas canvas, Func<PhysicalPoint, Point> toDip, double scale)
     {
@@ -69,7 +70,7 @@ internal sealed class AnnotationCanvasController
     // --- Drag-drawn annotations (rectangle, filled rectangle, arrow, freehand) ---
 
     /// <summary>Begins a draft annotation for a drag-drawn tool and shows it live on the canvas.</summary>
-    public void BeginDraft(OverlayTool tool, PhysicalPoint start, ArgbColor color, double thicknessPhysical)
+    public void BeginDraft(OverlayTool tool, PhysicalPoint start, ArgbColor color, double thicknessPhysical, bool hasShadow = false, ArrowStyle arrowStyle = ArrowStyle.Triangular)
     {
         // Snapshot only confirmed content, before adding the pixelation draft to the canvas.
         _pixelationSource = tool == OverlayTool.Pixelation ? CaptureUnderlay?.Invoke() : null;
@@ -84,6 +85,8 @@ internal sealed class AnnotationCanvasController
             _ => throw new NotSupportedException($"{tool} is not a drag-drawn tool."),
         };
         annotation.Color = color;
+        annotation.HasShadow = hasShadow && annotation is not PixelationAnnotation;
+        if (annotation is ArrowAnnotation arrow) arrow.Style = arrowStyle;
 
         _draft = annotation;
         FrameworkElement visual = CreateVisual(annotation);
@@ -193,7 +196,7 @@ internal sealed class AnnotationCanvasController
     // --- Inline text annotation ---
 
     /// <summary>Places an inline text editor at <paramref name="position"/> and gives it focus.</summary>
-    public void BeginText(PhysicalPoint position, ArgbColor color, double fontSizePhysical)
+    public void BeginText(PhysicalPoint position, ArgbColor color, double fontSizePhysical, bool hasShadow = false)
     {
         if (IsEditingText)
         {
@@ -228,6 +231,8 @@ internal sealed class AnnotationCanvasController
         _editPosition = position;
         _editColor = color;
         _editFontSize = fontSizePhysical;
+        _editShadow = hasShadow;
+        box.Effect = CreateShadow(hasShadow);
 
         // Defer focus to Input priority: the click that placed the box is still being
         // processed and the input manager would otherwise hand focus back to the window.
@@ -262,7 +267,7 @@ internal sealed class AnnotationCanvasController
 
         if (!string.IsNullOrWhiteSpace(box.Text))
         {
-            var annotation = new TextAnnotation(_editPosition, box.Text, _editFontSize) { Color = _editColor };
+            var annotation = new TextAnnotation(_editPosition, box.Text, _editFontSize) { Color = _editColor, HasShadow = _editShadow };
             _history.Execute(new AddAnnotationCommand(_layer, annotation));
             PrunePixelationImages();
             Resync();
@@ -353,6 +358,7 @@ internal sealed class AnnotationCanvasController
 
     private void UpdateVisual(FrameworkElement visual, Annotation annotation)
     {
+        visual.Effect = CreateShadow(annotation.HasShadow && annotation is not PixelationAnnotation);
         switch (annotation)
         {
             case PixelationAnnotation px:
@@ -391,12 +397,13 @@ internal sealed class AnnotationCanvasController
             case ArrowAnnotation ar:
                 var path = (Path)visual;
                 double arrowThicknessDip = ar.Thickness / _scale;
-                path.Data = BuildArrowGeometry(_toDip(ar.From), _toDip(ar.To), arrowThicknessDip);
-                path.Stroke = Brush(ar.Color);
+                path.Data = BuildArrowGeometry(_toDip(ar.From), _toDip(ar.To), arrowThicknessDip, ar.Style);
+                path.Stroke = ar.Style == ArrowStyle.Open ? Brush(ar.Color) : null;
+                path.Fill = ar.Style == ArrowStyle.Open ? null : Brush(ar.Color);
                 path.StrokeThickness = arrowThicknessDip;
-                path.StrokeStartLineCap = PenLineCap.Round;
-                path.StrokeEndLineCap = PenLineCap.Round;
-                path.StrokeLineJoin = PenLineJoin.Round;
+                path.StrokeStartLineCap = PenLineCap.Flat;
+                path.StrokeEndLineCap = PenLineCap.Flat;
+                path.StrokeLineJoin = PenLineJoin.Miter;
                 break;
 
             case LineAnnotation ln:
@@ -453,41 +460,55 @@ internal sealed class AnnotationCanvasController
         rect.Height = Math.Abs(b.Y - a.Y);
     }
 
-    /// <summary>Builds an open (two-barb) arrowhead plus shaft, in DIP space.</summary>
-    private static Geometry BuildArrowGeometry(Point from, Point to, double thicknessDip)
+    private System.Windows.Media.Effects.Effect? CreateShadow(bool enabled)
     {
-        double dx = to.X - from.X;
-        double dy = to.Y - from.Y;
-        double length = Math.Sqrt((dx * dx) + (dy * dy));
-
-        var geometry = new StreamGeometry();
-        using (StreamGeometryContext ctx = geometry.Open())
+        if (!enabled) return null;
+        var effect = new System.Windows.Media.Effects.DropShadowEffect
         {
-            ctx.BeginFigure(from, false, false);
-            ctx.LineTo(to, true, true);
+            Color = Colors.Black,
+            BlurRadius = 4 / _scale,
+            ShadowDepth = 3 / _scale,
+            Direction = 315,
+            Opacity = 0.45,
+        };
+        effect.Freeze();
+        return effect;
+    }
 
-            if (length > 0.001)
+    private Geometry BuildArrowGeometry(Point from, Point to, double thickness, ArrowStyle style)
+    {
+        Vector direction = to - from;
+        double length = direction.Length;
+        if (length < 0.001) return Geometry.Empty;
+        direction.Normalize();
+        Vector normal = new(-direction.Y, direction.X);
+        double head = Math.Min(length * 0.65, Math.Max(8 / _scale, thickness * 3.5));
+        Point neck = to - direction * head;
+        double wing = head * 0.48;
+        var geometry = new StreamGeometry();
+        using (var context = geometry.Open())
+        {
+            if (style == ArrowStyle.Open)
             {
-                double ux = dx / length;
-                double uy = dy / length;
-                double head = Math.Min(length, Math.Max(8.0, thicknessDip * 3.5));
-                const double spread = 0.5; // ~28.6° each side
-                double cos = Math.Cos(spread);
-                double sin = Math.Sin(spread);
-
-                var barb1 = new Point(
-                    to.X - (head * ((ux * cos) - (uy * sin))),
-                    to.Y - (head * ((uy * cos) + (ux * sin))));
-                var barb2 = new Point(
-                    to.X - (head * ((ux * cos) + (uy * sin))),
-                    to.Y - (head * ((uy * cos) - (ux * sin))));
-
-                ctx.BeginFigure(barb1, false, false);
-                ctx.LineTo(to, true, true);
-                ctx.LineTo(barb2, true, true);
+                context.BeginFigure(from, false, false);
+                context.LineTo(to, true, false);
+                context.BeginFigure(neck + normal * wing, false, false);
+                context.LineTo(to, true, false);
+                context.LineTo(neck - normal * wing, true, false);
+            }
+            else
+            {
+                double half = Math.Min(thickness / 2, wing * 0.5);
+                double tail = style == ArrowStyle.Tapered ? 0 : half;
+                context.BeginFigure(from + normal * tail, true, true);
+                context.LineTo(neck + normal * half, true, false);
+                context.LineTo(neck + normal * wing, true, false);
+                context.LineTo(to, true, false);
+                context.LineTo(neck - normal * wing, true, false);
+                context.LineTo(neck - normal * half, true, false);
+                context.LineTo(from - normal * tail, true, false);
             }
         }
-
         geometry.Freeze();
         return geometry;
     }

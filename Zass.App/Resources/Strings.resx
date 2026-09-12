@@ -226,4 +226,9 @@
   <data name="CollageElbowArrow" xml:space="preserve"><value>Elbow arrow</value></data>
   <data name="CollageAnnotationError" xml:space="preserve"><value>The object exceeds the canvas limits. Use a shorter arrow or text.</value></data>
   <data name="CollageText" xml:space="preserve"><value>Text</value></data>
+  <data name="AnnotationShadow" xml:space="preserve"><value>Shadow</value></data>
+  <data name="ArrowTriangular" xml:space="preserve"><value>Triangular tip</value></data>
+  <data name="ArrowOpen" xml:space="preserve"><value>Angular open tip</value></data>
+  <data name="ArrowTapered" xml:space="preserve"><value>Tapered body</value></data>
+  <data name="ArrowStyleLabel" xml:space="preserve"><value>Arrow style</value></data>
 </root>

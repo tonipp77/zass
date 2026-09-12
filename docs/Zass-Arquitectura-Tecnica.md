@@ -357,3 +357,17 @@ Separar `Zass.Core` sin dependencia de WPF facilita las pruebas del modelo de an
   al crear un nuevo comando. El bitmap no modifica el fondo original del overlay.
 - Los atajos de teclado confirman un trazo activo una sola vez antes de ejecutar acciones,
   evitando incluir borradores sin confirmar al exportar o duplicar operaciones de historial.
+
+
+## 17. Primer incremento v2: estilos y sombras en captura
+
+`ArrowStyle` y `Annotation.HasShadow` conservan el estilo en el modelo sin WPF.
+El controlador captura estas preferencias al iniciar cada objeto, incluido el editor
+inline de texto. Undo/redo reutiliza el objeto con sus preferencias originales.
+
+Las flechas cerradas se dibujan como polígonos rellenos; la abierta utiliza extremos
+planos y uniones angulares. La cabeza mínima también se convierte de píxeles físicos
+a DIP. `DropShadowEffect` se aplica por objeto (negro, opacidad 0,45, desenfoque 4 px,
+desplazamiento 3 px hacia abajo/derecha). No se aplica a `PixelationAnnotation`.
+La exportación sigue renderizando el mismo canvas de anotaciones, sin controles.
+No se añaden dependencias ni se cambian TFM, captura o persistencia.

@@ -109,6 +109,10 @@ public partial class OverlayWindow : Window
         CollageButton.ToolTip = Strings.ToolCollage;
         CloseButton.ToolTip = Strings.ToolClose;
         HintText.Text = Strings.OverlayHint;
+        ShadowCheckBox.Content = Strings.AnnotationShadow;
+        ArrowStyleCombo.ItemsSource = new[] { Strings.ArrowTriangular, Strings.ArrowOpen, Strings.ArrowTapered };
+        ArrowStyleCombo.SelectedIndex = 0;
+        ArrowStyleCombo.ToolTip = Strings.ArrowStyleLabel;
         PointerToolButton.IsChecked = true;
 
         InitializeToolOptions();
@@ -253,6 +257,8 @@ public partial class OverlayWindow : Window
 
         OptionsSeparator.Visibility = usesColor ? Visibility.Visible : Visibility.Collapsed;
         ColorButton.Visibility = usesColor ? Visibility.Visible : Visibility.Collapsed;
+        ShadowCheckBox.Visibility = usesColor ? Visibility.Visible : Visibility.Collapsed;
+        ArrowStyleCombo.Visibility = _tool == OverlayTool.Arrow ? Visibility.Visible : Visibility.Collapsed;
         ThicknessPanel.Visibility = usesStroke ? Visibility.Visible : Visibility.Collapsed;
         TextSizePanel.Visibility = isText ? Visibility.Visible : Visibility.Collapsed;
         PixelSizePanel.Visibility = _tool == OverlayTool.Pixelation ? Visibility.Visible : Visibility.Collapsed;
@@ -344,7 +350,7 @@ public partial class OverlayWindow : Window
         if (_tool == OverlayTool.Text)
         {
             (int tx, int ty) = ClampToBounds(px, py);
-            _annotations.BeginText(new PhysicalPoint(tx, ty), _currentColor, _currentTextSize);
+            _annotations.BeginText(new PhysicalPoint(tx, ty), _currentColor, _currentTextSize, ShadowCheckBox.IsChecked == true);
             return;
         }
 
@@ -353,7 +359,8 @@ public partial class OverlayWindow : Window
             _mode = DragMode.DrawingAnnotation;
             (int sx, int sy) = ClampToBounds(px, py);
             _annotations.BeginDraft(_tool, new PhysicalPoint(sx, sy), _currentColor,
-                _tool == OverlayTool.Pixelation ? PixelSizeSlider.Value : _currentThickness);
+                _tool == OverlayTool.Pixelation ? PixelSizeSlider.Value : _currentThickness,
+                ShadowCheckBox.IsChecked == true, (ArrowStyle)Math.Max(0, ArrowStyleCombo.SelectedIndex));
             CaptureMouse();
             return;
         }

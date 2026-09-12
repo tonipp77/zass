@@ -18,6 +18,8 @@ public sealed class ArrowAnnotation : Annotation
     /// <summary>Tail of the arrow.</summary>
     public PhysicalPoint From { get; set; }
 
+    public ArrowStyle Style { get; set; } = ArrowStyle.Triangular;
+
     /// <summary>Head of the arrow.</summary>
     public PhysicalPoint To { get; set; }
 

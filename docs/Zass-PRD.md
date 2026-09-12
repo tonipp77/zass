@@ -323,3 +323,24 @@ la selección de pantalla existente, con sus anotaciones confirmadas.
 El pixelado deja de estar diferido al roadmap posterior para esta rama. Su intensidad
 se debe comprobar visualmente sobre el contenido concreto; no equivale a una redacción
 irreversible de información sensible (para ello existe el rectángulo opaco).
+
+
+## 14. Evolución a v2.0 solicitada el 2026-09-12
+
+La referencia visual es orientativa; el alcance es la petición de Toni, no los menús
+ni servicios de la aplicación fotografiada. Desarrollo por incrementos en el plan.
+
+- **RF-30 — Flechas en captura:** estilos triangular relleno (predeterminado), abierto
+  angular y cuerpo afinado, elegidos por Toni. Selector para nuevas anotaciones.
+- **RF-31 — Sombra en captura:** interruptor para nuevas anotaciones, incluido texto,
+  salvo pixelado. Inicialmente desactivado; se conserva entre herramientas de la captura.
+  El historial conserva el estilo individual. Se recorta en el límite de exportación.
+- **RF-32 — Editor de collage:** herramientas arriba, opciones generales a la izquierda,
+  propiedades de herramienta a la derecha, lienzo central y buffer de capturas abajo.
+- **RF-33 — Sellos:** check, aspa, prohibido, +, -, ! y ?.
+- **RF-34 — Pasos manuales:** número o letra introducido por el usuario, círculo o lágrima lateral.
+- **RF-35 — Rótulos:** texto libre en caja blanca con borde o bocadillo de cómic.
+- **RF-36 — Estilos de collage:** ampliar texto y flechas según referencias; sombra opcional
+  en los elementos añadidos. Preservar objetos editables e historial hasta exportar.
+
+RF-30/31 implementados y validados por Toni el 2026-09-12. RF-32 a RF-36 pendientes.

@@ -280,3 +280,40 @@ La v1 se considera completa cuando los Incrementos 1–7 estén validados contra
 
 Multimonitor, captura de ventana/retardo, nube/compartir, selector de fuente, autoactualización,
 firma de código, vídeo/GIF y edición avanzada. Ver PRD §12 (roadmap v2+).
+
+
+## Evolución a v2.0 (solicitud de Toni, 2026-09-12)
+
+Esta petición amplía el alcance histórico del esqueleto y de v1. No implica validar
+el empaquetado ni las pruebas manuales anteriores. Se mantiene la entrega incremental,
+sin commit ni push hasta confirmación de Toni.
+
+### ✅ V2.1 — Acabados de flecha y sombra en captura
+- Implementado: selector triangular (predeterminado), abierto angular y cuerpo afinado.
+  Los tres estilos fueron elegidos expresamente por Toni en esta sesión.
+- Sombra opcional para nuevas flechas, líneas, rectángulos, rellenos, dibujo libre y texto.
+  El pixelado no muestra la opción ni recibe el efecto. Se conserva al deshacer/rehacer.
+- Preferencias conservadas durante la captura; no se modifica la persistencia de ajustes.
+- Compilación correcta; aviso NU1900 por consulta de vulnerabilidades bloqueada por red.
+- Validado manualmente por Toni el 2026-09-12; 130/130 pruebas automáticas superadas.
+  Commit y push a `feature-1` autorizados expresamente. Pruebas: `Zass-V2-Pruebas.md`.
+
+### ⬜ V2.2 — Distribución del editor de collage y buffer de sesión
+- Herramientas arriba, opciones generales a la izquierda, propiedades contextuales a
+  la derecha, lienzo central y miniaturas de capturas disponibles abajo.
+- Mantener lienzo libre, resolución original, zoom visual e historial de objetos.
+- Concretar antes de implementar si el buffer conserva también capturas copiadas/guardadas
+  directamente y si exportar termina la sesión, como actualmente, o permite seguir editando.
+
+### ⬜ V2.3 — Sellos, pasos y rótulos en collage
+- Sellos: check, aspa, prohibido, +, -, ! y ?.
+- Pasos con número o letra introducidos manualmente; círculo y lágrima lateral.
+- Rótulos con texto libre: rectángulo blanco con borde y bocadillo de cómic.
+- Objetos editables con sombra opcional, historial y exportación coherente.
+
+### ⬜ V2.4 — Texto, flechas y sombras del collage
+- Ampliar texto a partir de la referencia: fuente, tamaño, relleno, contorno y sombra.
+- Ampliar flechas tomando como referencia estilos continuos/discontinuos, puntas,
+  anchura y opacidad, conservando los estilos curvo, recto y acodado existentes.
+- Sombra opcional para todos los elementos añadidos; concretar controles de estilo
+  con Toni antes de implementar decisiones que los documentos no definan.

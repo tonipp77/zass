@@ -226,4 +226,9 @@
   <data name="CollageElbowArrow" xml:space="preserve"><value>Flecha acodada</value></data>
   <data name="CollageAnnotationError" xml:space="preserve"><value>El objeto supera los límites del lienzo. Utiliza una flecha o un texto más corto.</value></data>
   <data name="CollageText" xml:space="preserve"><value>Texto</value></data>
+  <data name="AnnotationShadow" xml:space="preserve"><value>Sombra</value></data>
+  <data name="ArrowTriangular" xml:space="preserve"><value>Punta triangular</value></data>
+  <data name="ArrowOpen" xml:space="preserve"><value>Punta abierta</value></data>
+  <data name="ArrowTapered" xml:space="preserve"><value>Cuerpo afinado</value></data>
+  <data name="ArrowStyleLabel" xml:space="preserve"><value>Estilo de flecha</value></data>
 </root>

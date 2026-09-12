@@ -191,6 +191,10 @@
                         <TextBlock Text="{Binding ElementName=PixelSizeSlider, Path=Value, StringFormat=F0}"
                                    Style="{StaticResource ToolbarCaption}" Margin="5,0,0,0" />
                     </StackPanel>
+                    <ComboBox x:Name="ArrowStyleCombo" Width="132" Margin="6,0,0,0"
+                              VerticalAlignment="Center" Focusable="False" SelectedIndex="0" Visibility="Collapsed" />
+                    <CheckBox x:Name="ShadowCheckBox" Margin="8,0,4,0" Foreground="White"
+                              VerticalAlignment="Center" Focusable="False" Visibility="Collapsed" />
                     <!-- Export actions (always visible): copy, save, cancel -->
                     <Border x:Name="ActionsSeparator" Width="1" Margin="5,3" Background="#40FFFFFF" />
 

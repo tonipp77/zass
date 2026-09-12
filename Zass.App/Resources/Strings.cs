@@ -16,6 +16,12 @@ internal static class Strings
     private static string Get(string key) =>
         Manager.GetString(key, CultureInfo.CurrentUICulture) ?? key;
 
+    public static string AnnotationShadow => Get(nameof(AnnotationShadow));
+    public static string ArrowTriangular => Get(nameof(ArrowTriangular));
+    public static string ArrowOpen => Get(nameof(ArrowOpen));
+    public static string ArrowTapered => Get(nameof(ArrowTapered));
+    public static string ArrowStyleLabel => Get(nameof(ArrowStyleLabel));
+
     public static string ToolCollage => Get(nameof(ToolCollage));
     public static string CollageTitle => Get(nameof(CollageTitle));
     public static string CollageHint => Get(nameof(CollageHint));

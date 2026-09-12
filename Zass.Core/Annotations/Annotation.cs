@@ -29,6 +29,9 @@ public abstract class Annotation
     /// <summary>Paint order; higher draws on top. Managed by the presentation layer.</summary>
     public int ZIndex { get; set; }
 
+    /// <summary>Whether the annotation casts a presentation shadow. Pixelation never does.</summary>
+    public bool HasShadow { get; set; }
+
     /// <summary>Axis-aligned bounding box in physical pixels, including the stroke.</summary>
     public abstract PhysicalRect Bounds { get; }
 
