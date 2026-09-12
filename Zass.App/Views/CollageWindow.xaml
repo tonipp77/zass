@@ -1,0 +1,174 @@
+<Window x:Class="Zass.App.Views.CollageWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:overlay="clr-namespace:Zass.App.Overlay"
+        Width="1280" Height="820" MinWidth="900" MinHeight="580"
+        WindowStartupLocation="CenterScreen" Background="#F3F5F8"
+        FontFamily="Segoe UI" Foreground="#243247">
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Padding" Value="12,9" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#D6DDE7" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style TargetType="ToggleButton">
+            <Setter Property="Padding" Value="14,10" />
+            <Setter Property="Margin" Value="0,0,8,0" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#D6DDE7" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Style.Triggers>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Background" Value="#DFEDFF" />
+                    <Setter Property="BorderBrush" Value="#3979CD" />
+                    <Setter Property="Foreground" Value="#165DAE" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="SectionTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,0,0,12" />
+        </Style>
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Border Background="White" BorderBrush="#D6DDE7" BorderThickness="0,0,0,1" Padding="20,12">
+            <DockPanel LastChildFill="True">
+                <TextBlock x:Name="Heading" FontSize="22" FontWeight="SemiBold" Margin="0,0,30,0" VerticalAlignment="Center" />
+                <WrapPanel x:Name="DrawingTools" VerticalAlignment="Center">
+                    <ToggleButton x:Name="PointerTool" Click="OnPointerTool" IsChecked="True" />
+                    <ToggleButton x:Name="ArrowTool" Click="OnArrowTool" />
+                    <ToggleButton x:Name="TextTool" Click="OnTextTool" />
+                    <ToggleButton x:Name="StampTool" Click="OnStampTool" />
+                    <ToggleButton x:Name="StepTool" Click="OnStepTool" />
+                    <ToggleButton x:Name="LabelTool" Click="OnLabelTool" />
+                </WrapPanel>
+            </DockPanel>
+        </Border>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="174" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="230" />
+            </Grid.ColumnDefinitions>
+            <Border Background="#F8FAFC" BorderBrush="#D6DDE7" BorderThickness="0,0,1,0" Padding="14,18">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <TextBlock x:Name="GeneralHeading" Style="{StaticResource SectionTitle}" />
+                        <Button x:Name="CaptureButton" Click="OnCapture" />
+                        <Separator Margin="0,6,0,14" />
+                        <Button x:Name="UndoButton" Click="OnUndo" />
+                        <Button x:Name="RedoButton" Click="OnRedo" />
+                        <Button x:Name="RemoveButton" Click="OnRemove" />
+                        <Button x:Name="ClearButton" Click="OnClear" />
+                        <Separator Margin="0,6,0,14" />
+                        <Button x:Name="CopyButton" Click="OnCopy" />
+                        <Button x:Name="SaveButton" Click="OnSave" />
+                        <Button x:Name="HideButton" Click="OnHide" />
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+            <Grid Grid.Column="1" Margin="16">
+                <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                <TextBlock x:Name="Hint" TextWrapping="Wrap" Foreground="#637185" Margin="0,0,0,12" FontSize="12" />
+                <WrapPanel Grid.Row="1" Margin="0,0,0,8">
+                    <Button x:Name="ZoomOutButton" Click="OnZoomOut" Margin="0,0,6,4" />
+                    <Button x:Name="ZoomInButton" Click="OnZoomIn" Margin="0,0,6,4" />
+                    <Button x:Name="ZoomActualButton" Click="OnZoomActual" Margin="0,0,6,4" />
+                    <Button x:Name="ZoomFitButton" Click="OnZoomFit" Margin="0,0,6,4" />
+                    <TextBlock x:Name="ZoomHelp" VerticalAlignment="Center" FontSize="11" Foreground="#637185" />
+                </WrapPanel>
+                <Border Grid.Row="2" BorderBrush="#CAD3DF" BorderThickness="1">
+                    <ScrollViewer x:Name="Viewport" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
+                                  Background="#E1E6ED" Focusable="False" PreviewMouseWheel="OnViewportWheel">
+                        <Canvas x:Name="Surface" Background="White" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                MouseLeftButtonDown="OnSurfaceDown" MouseMove="OnSurfaceMove"
+                                MouseLeftButtonUp="OnSurfaceUp" LostMouseCapture="OnSurfaceLostCapture">
+                            <Canvas.LayoutTransform><ScaleTransform x:Name="ZoomTransform" ScaleX="0.5" ScaleY="0.5" /></Canvas.LayoutTransform>
+                        </Canvas>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+            <Border Grid.Column="2" Background="#F8FAFC" BorderBrush="#D6DDE7" BorderThickness="1,0,0,0" Padding="16,18">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <TextBlock x:Name="PropertiesHeading" Style="{StaticResource SectionTitle}" />
+                        <TextBlock x:Name="PointerHint" TextWrapping="Wrap" Foreground="#637185" />
+                        <StackPanel x:Name="ToolProperties" Visibility="Collapsed">
+                            <StackPanel x:Name="ArrowStyles" Margin="0,0,0,16">
+                                <ToggleButton x:Name="CurvedTool" Click="OnCurvedTool" Margin="0,0,0,6" />
+                                <ToggleButton x:Name="StraightTool" Click="OnStraightTool" Margin="0,0,0,6" />
+                                <ToggleButton x:Name="ElbowTool" Click="OnElbowTool" Margin="0,0,0,6" />
+                            </StackPanel>
+                            <ComboBox x:Name="StampChoice" Margin="0,0,0,12" Visibility="Collapsed" />
+                            <ComboBox x:Name="StepChoice" Margin="0,0,0,12" Visibility="Collapsed" />
+                            <ComboBox x:Name="LabelChoice" Margin="0,0,0,12" Visibility="Collapsed" />
+                            <StackPanel x:Name="ArrowOptions" Visibility="Collapsed" Margin="0,0,0,12">
+                                <ComboBox x:Name="TipChoice" />
+                                <CheckBox x:Name="DashedCheck" Margin="0,8,0,0" />
+                            </StackPanel>
+                            <StackPanel x:Name="TextOptions" Visibility="Collapsed" Margin="0,0,0,12">
+                                <ComboBox x:Name="FontChoice" />
+                                <CheckBox x:Name="BoldCheck" Margin="0,8,0,0" />
+                                <CheckBox x:Name="ItalicCheck" Margin="0,8,0,0" />
+                                <CheckBox x:Name="OutlineCheck" Margin="0,8,0,0" />
+                            </StackPanel>
+                            <Button x:Name="ColorButton" Click="OnColorClick" HorizontalAlignment="Left">
+                                <Border x:Name="ColorSwatch" Width="40" Height="20" Background="Red" />
+                            </Button>
+                            <TextBlock x:Name="SizeLabel" Margin="0,8,0,6" />
+                            <DockPanel>
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding ElementName=SizeSlider, Path=Value, StringFormat=F0}" Width="32" TextAlignment="Right" />
+                                <Slider x:Name="SizeSlider" Minimum="8" Maximum="96" Value="24"
+                                        TickFrequency="1" IsSnapToTickEnabled="True" Focusable="False" />
+                            </DockPanel>
+                            <CheckBox x:Name="ShadowCheck" Margin="0,16,0,8" />
+                            <TextBlock x:Name="OpacityLabel" Margin="0,0,0,6" />
+                            <DockPanel>
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding ElementName=OpacitySlider, Path=Value, StringFormat={}{0}%}" Width="38" TextAlignment="Right" />
+                                <Slider x:Name="OpacitySlider" Minimum="10" Maximum="100" Value="100" TickFrequency="5" IsSnapToTickEnabled="True" Focusable="False" />
+                            </DockPanel>
+                            <Popup x:Name="ColorPopup" PlacementTarget="{Binding ElementName=ColorButton}"
+                                   Placement="Left" StaysOpen="False" AllowsTransparency="True" Closed="OnColorPopupClosed">
+                                <Border Background="#F02A2A2A" Padding="10" CornerRadius="6">
+                                    <overlay:ColorPicker x:Name="ColorPickerControl" />
+                                </Border>
+                            </Popup>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+        <Border Grid.Row="2" Background="#F8FAFC" BorderBrush="#D6DDE7" BorderThickness="0,1,0,1" Padding="16,10">
+            <StackPanel>
+                <DockPanel Margin="0,0,0,8">
+                    <TextBlock x:Name="BufferHeading" FontWeight="SemiBold" />
+                    <TextBlock x:Name="BufferHint" Foreground="#637185" Margin="16,0,0,0" />
+                </DockPanel>
+                <TextBlock x:Name="BufferEmpty" Foreground="#637185" Margin="0,8" />
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" MaxHeight="116">
+                    <StackPanel x:Name="CaptureStrip" Orientation="Horizontal" />
+                </ScrollViewer>
+            </StackPanel>
+        </Border>
+        <DockPanel Grid.Row="3" Margin="16,8">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <TextBlock x:Name="ZoomLabel" VerticalAlignment="Center" Margin="8,0" />
+                <Slider x:Name="ZoomSlider" Width="110" Minimum="0.1" Maximum="2" Value="0.5"
+                        Focusable="False" VerticalAlignment="Center" ValueChanged="OnZoomChanged" />
+                <TextBlock x:Name="ZoomValue" Width="44" VerticalAlignment="Center" Margin="8,0" />
+            </StackPanel>
+            <TextBlock x:Name="Status" VerticalAlignment="Center" Foreground="#637185" />
+        </DockPanel>
+    </Grid>
+</Window>

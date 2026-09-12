@@ -8,6 +8,12 @@ namespace Zass.Interop.Native;
 /// </summary>
 internal static class NativeMethods
 {
+    [DllImport("dwmapi.dll", ExactSpelling = true)]
+    public static extern int DwmSetWindowAttribute(IntPtr hwnd, uint attribute, in int value, uint size);
+
+    [DllImport("dwmapi.dll", ExactSpelling = true)]
+    public static extern int DwmFlush();
+
     // --- Raster operation codes for BitBlt ---
     public const uint SRCCOPY = 0x00CC0020;
     public const uint CAPTUREBLT = 0x40000000;

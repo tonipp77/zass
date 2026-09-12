@@ -3,24 +3,22 @@ using Zass.Interop;
 namespace Zass.Core.Annotations;
 
 /// <summary>
-/// A straight arrow from <see cref="From"/> to <see cref="To"/>. The arrowhead is
-/// a presentation concern; the model keeps just the segment, color and thickness.
+/// A straight line from <see cref="From"/> to <see cref="To"/> without an arrowhead.
+/// The model keeps the segment, color and thickness in physical pixels.
 /// Hit-testing measures distance to the segment.
 /// </summary>
-public sealed class ArrowAnnotation : Annotation
+public sealed class LineAnnotation : Annotation
 {
-    public ArrowAnnotation(PhysicalPoint from, PhysicalPoint to)
+    public LineAnnotation(PhysicalPoint from, PhysicalPoint to)
     {
         From = from;
         To = to;
     }
 
-    /// <summary>Tail of the arrow.</summary>
+    /// <summary>Start of the line.</summary>
     public PhysicalPoint From { get; set; }
 
-    public ArrowStyle Style { get; set; } = ArrowStyle.Triangular;
-
-    /// <summary>Head of the arrow.</summary>
+    /// <summary>End of the line.</summary>
     public PhysicalPoint To { get; set; }
 
     public override PhysicalRect Bounds => Geometry.EnclosingRect(From, To, Thickness / 2.0);

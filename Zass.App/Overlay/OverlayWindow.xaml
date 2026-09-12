@@ -127,6 +127,12 @@
                               StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
                               Width="16" Height="16" Stretch="None" />
                     </ToggleButton>
+                    <ToggleButton x:Name="LineToolButton" Style="{StaticResource ToolButtonStyle}"
+                                  Focusable="False" Margin="2,0,0,0" Click="OnLineToolClick">
+                        <Path Data="M2,14 L14,2" Stroke="White" StrokeThickness="1.6"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                              Width="16" Height="16" Stretch="None" />
+                    </ToggleButton>
                     <ToggleButton x:Name="RectangleToolButton" Style="{StaticResource ToolButtonStyle}"
                                   Focusable="False" Margin="2,0,0,0" Click="OnRectangleToolClick">
                         <Rectangle Width="16" Height="12" Stroke="White" StrokeThickness="1.5" Fill="Transparent" />
@@ -142,6 +148,13 @@
                               Width="16" Height="16" Stretch="None" />
                     </ToggleButton>
 
+                    <ToggleButton x:Name="PixelationToolButton" Style="{StaticResource ToolButtonStyle}"
+                                  Focusable="False" Margin="2,0,0,0" Click="OnPixelationToolClick">
+                        <Grid Width="16" Height="16">
+                            <Path Data="M0,0 H16 V16 H0 Z" Fill="#777777" />
+                            <Path Data="M0,0 H8 V8 H0 Z M8,8 H16 V16 H8 Z" Fill="White" />
+                        </Grid>
+                    </ToggleButton>
                     <!-- Color / size options (shown contextually for the active tool) -->
                     <Border x:Name="OptionsSeparator" Width="1" Margin="5,3" Background="#40FFFFFF" />
 
@@ -170,6 +183,18 @@
                                    Foreground="White" Width="22" TextAlignment="Right" Margin="5,0,0,0" />
                     </StackPanel>
 
+                    <StackPanel x:Name="PixelSizePanel" Orientation="Horizontal" VerticalAlignment="Center"
+                                Margin="4,0,0,0" Visibility="Collapsed">
+                        <TextBlock x:Name="PixelSizeLabel" Style="{StaticResource ToolbarCaption}" Margin="0,0,5,0" />
+                        <Slider x:Name="PixelSizeSlider" Width="84" Minimum="8" Maximum="64" Value="24"
+                                IsSnapToTickEnabled="True" TickFrequency="4" Focusable="False" />
+                        <TextBlock Text="{Binding ElementName=PixelSizeSlider, Path=Value, StringFormat=F0}"
+                                   Style="{StaticResource ToolbarCaption}" Margin="5,0,0,0" />
+                    </StackPanel>
+                    <ComboBox x:Name="ArrowStyleCombo" Width="132" Margin="6,0,0,0"
+                              VerticalAlignment="Center" Focusable="False" SelectedIndex="0" Visibility="Collapsed" />
+                    <CheckBox x:Name="ShadowCheckBox" Margin="8,0,4,0" Foreground="White"
+                              VerticalAlignment="Center" Focusable="False" Visibility="Collapsed" />
                     <!-- Export actions (always visible): copy, save, cancel -->
                     <Border x:Name="ActionsSeparator" Width="1" Margin="5,3" Background="#40FFFFFF" />
 
@@ -189,6 +214,12 @@
                               StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                               Width="16" Height="16" Stretch="None"
                               Data="M8,2 L8,10 M4.5,6.5 L8,10.5 L11.5,6.5 M2.5,13 L13.5,13" />
+                    </Button>
+
+                    <Button x:Name="CollageButton" Style="{StaticResource ChromeButtonStyle}" Click="OnCollageClick">
+                        <Path Stroke="White" StrokeThickness="1.4" Fill="Transparent"
+                              Width="18" Height="18" Stretch="None"
+                              Data="M1,1 L11,1 L11,7 L1,7 Z M1,10 L7,10 L7,17 L1,17 Z M13,10 L13,17 M9.5,13.5 L16.5,13.5" />
                     </Button>
 
                     <Button x:Name="CloseButton" Style="{StaticResource ChromeButtonStyle}" Click="OnCloseClick">

@@ -266,3 +266,144 @@ La v1 se considera completa cuando:
 - Selector de fuente para texto; más herramientas (numeración de pasos, resaltado, desenfoque/pixelado, recorte posterior).
 - Autoactualización y firma de código.
 - Captura de vídeo/GIF.
+
+## 13. Ampliación solicitada: feature-1 (2026-09-08)
+
+Esta petición amplía el conjunto de herramientas y destinos de exportación de v1.
+No incluye recortar posteriormente una imagen importada: cada recorte se obtiene mediante
+la selección de pantalla existente, con sus anotaciones confirmadas.
+
+- **RF-22 — Línea:** segmento sin punta, dibujado por arrastre, con el mismo selector de
+  color y grosor de 1–20 píxeles que la flecha. Botón propio y atajo L. Una línea completa
+  equivale a un comando: Ctrl+Z la elimina y Ctrl+Y la restaura con su estilo.
+- **RF-23 — Destino del recorte:** tras seleccionar y anotar, el usuario elige Copiar,
+  Guardar o Añadir recorte al collage. Añadir cierra el overlay solo tras aceptar el recorte.
+- **RF-24 — Collage libre:** ventana con recortes movibles por arrastre, conservando sus
+  dimensiones originales. Nuevos recortes se colocan debajo de los existentes; en
+  solapamientos, los añadidos después quedan delante. Permite quitar, vaciar y deshacer/
+  rehacer; cada movimiento se registra una vez al soltar. Zoom solo de visualización.
+- **RF-25 — Sesión y salida:** el collage persiste en memoria mientras Zass siga abierto.
+  Cerrar/ocultar la ventana permite continuar desde el menú de bandeja. Nueva captura
+  oculta el collage antes de capturar. Cancelar una captura conserva el collage anterior.
+  Terminar y copiar / Terminar y guardar exportan una sola imagen y cierran la sesión
+  únicamente tras el éxito. Cancelar Guardar o un error de exportación conserva el trabajo.
+  Formatos PNG/JPG, con las preferencias de exportación existentes.
+- **Salida:** unión rectangular ajustada a los recortes, espacios blancos y resolución
+  original, sin zoom, marcos de selección ni controles. No hay persistencia de proyecto
+  entre ejecuciones. Límite técnico de 64 millones de píxeles en la composición y en los
+  recortes retenidos con su historial; dimensión máxima 32767 píxeles por lado.
+
+**Decisiones confirmadas por Toni:** lienzo libre y conservación solo durante la sesión.
+**Aceptación:** ejecutar `Zass-Feature-1-Pruebas.md`; pendiente de validación manual.
+
+### Ampliación de collage y pixelado
+
+- **RF-26 — Flechas en collage:** tres estilos vectoriales rellenos: curva con cola
+  afinada (referencia aportada por Toni), recta y acodada. El clic inicia la flecha;
+  arrastrar con el botón izquierdo muestra la previsualización y soltar confirma el
+  objeto con la punta en el extremo del arrastre. Color y grosor configurables para
+  nuevas flechas. Un clic sin arrastre no añade nada.
+- **RF-27 — Texto en collage:** seleccionar Texto y hacer clic para escribir en el
+  lienzo, con color y tamaño configurables. Enter, Esc o clic fuera confirman el texto;
+  el texto vacío se descarta. Mientras se escribe, Ctrl+Z/Ctrl+Y pertenecen al editor;
+  tras confirmar actúan sobre el objeto completo. Antes de capturar/exportar se confirma
+  el texto pendiente.
+- **RF-28 — Historial único:** recortes, flechas, texto, movimientos y borrados comparten
+  un único historial cronológico. Ctrl+Z/Ctrl+Y eliminan/restauran objetos completos con
+  su estilo y posición. Seleccionar/mover y Quitar objeto funcionan también con flechas
+  y texto. Las capturas se dibujan debajo de las anotaciones; cada grupo conserva su
+  orden de inserción. Se exportan todos los objetos, incluidos los situados
+  fuera de los recortes. Las flechas no se anclan automáticamente al mover las imágenes.
+- **RF-29 — Pixelado en recortes:** herramienta Pixelar (P). Arrastrar define un
+  rectángulo cuyo contenido se reemplaza por bloques de color medio, incluidas las
+  anotaciones previas situadas debajo. Tamaño de bloque de 8 a 64 píxeles, por defecto 24.
+  El efecto se confirma al soltar, se deshace/rehace completo y se conserva al copiar,
+  guardar o añadir al collage. No depende del color activo. Las anotaciones añadidas
+  después quedan encima del efecto.
+
+El pixelado deja de estar diferido al roadmap posterior para esta rama. Su intensidad
+se debe comprobar visualmente sobre el contenido concreto; no equivale a una redacción
+irreversible de información sensible (para ello existe el rectángulo opaco).
+
+
+## 14. Evolución a v2.0 solicitada el 2026-09-12
+
+La referencia visual es orientativa; el alcance es la petición de Toni, no los menús
+ni servicios de la aplicación fotografiada. Desarrollo por incrementos en el plan.
+
+- **RF-30 — Flechas en captura:** estilos triangular relleno (predeterminado), abierto
+  angular y cuerpo afinado, elegidos por Toni. Selector para nuevas anotaciones.
+- **RF-31 — Sombra en captura:** interruptor para nuevas anotaciones, incluido texto,
+  salvo pixelado. Inicialmente desactivado; se conserva entre herramientas de la captura.
+  El historial conserva el estilo individual. Se recorta en el límite de exportación.
+- **RF-32 — Editor de collage:** herramientas arriba, opciones generales a la izquierda,
+  propiedades de herramienta a la derecha, lienzo central y buffer de capturas abajo.
+- **RF-33 — Sellos:** check, aspa, prohibido, +, -, ! y ?.
+- **RF-34 — Pasos manuales:** número o letra introducido por el usuario, círculo o lágrima lateral.
+- **RF-35 — Rótulos:** texto libre en caja blanca con borde o bocadillo de cómic.
+- **RF-36 — Estilos de collage:** ampliar texto y flechas según referencias; sombra opcional
+  en los elementos añadidos. Preservar objetos editables e historial hasta exportar.
+
+RF-30/31 implementados y validados por Toni el 2026-09-12. RF-32 implementado y
+entrega aprobada por Toni para commit y push. RF-33 a RF-36 implementados en entrega conjunta, validados por Toni.
+
+### Sesión de collage v2: decisiones confirmadas por Toni
+
+Esta ampliación sustituye la finalización automática de RF-25: copiar/guardar el collage
+mantiene el editor, sus objetos, historial y capturas hasta salir de Zass. Cerrar la ventana
+la oculta. Vaciar lienzo solo quita objetos y puede deshacerse; conserva las miniaturas.
+Todas las capturas exportadas correctamente desde el overlay (copiar, guardar o añadir
+al collage) quedan en memoria, incluidas sus anotaciones. Cancelar no retiene una captura.
+La tira inferior permite insertar otra instancia por clic, a resolución original. Añadir
+al collage sigue colocando el recorte directamente además de retenerlo en la tira.
+
+El buffer mantiene el límite existente de 64 millones de píxeles. Reinsertar no duplica
+el bitmap ni consume ese presupuesto otra vez. Si una captura directa no cabe, la copia
+o guardado sigue siendo válido y se notifica que no pudo conservarse en el buffer.
+El lienzo mantiene su límite independiente de superficie y dimensión de RF-24/25.
+
+
+### Herramientas y estilos de collage: entrega conjunta autorizada
+
+Sellos por clic: check, aspa, prohibido, +, -, ! y ?. Pasos: escribir manualmente hasta
+cuatro caracteres (número o letra) en un círculo o lágrima lateral. Rótulos: texto libre
+hasta 1000 caracteres en caja blanca con borde de color o bocadillo. Texto, pasos y
+rótulos se confirman con Enter/Esc o clic fuera; no hay numeración automática.
+
+Conjunto de estilos confirmado por Toni: Segoe UI, Arial, Calibri, Consolas y Georgia;
+negrita/cursiva, contorno blanco en texto; flechas con punta rellena, abierta o doble
+y trazo continuo/discontinuo en las tres geometrías existentes. Las nuevas anotaciones
+pueden llevar sombra (negra, desplazamiento de 3 píxeles y opacidad 32 %) y opacidad
+común de 10–100 %. Color y tamaño 8–96 se toman al crear el objeto. El contenido se
+conserva como vector y puede moverse, quitarse y deshacerse/rehacerse como objeto entero.
+Los cambios de controles afectan a nuevos objetos; no restilizan los ya confirmados.
+Las sombras se incluyen en el tamaño exportado; ninguna capa de interfaz se exporta.
+
+
+### Correcciones de uso del collage tras validación visual
+
+El contorno blanco se dibuja detrás del relleno de texto; el color interior debe verse
+con peso normal y negrita. Crear cualquier objeto o insertar una captura activa Seleccionar/
+mover y conserva el nuevo objeto seleccionado. Arrastrar mueve el objeto completo;
+flechas desplazan 1 px y Mayús+flechas 10 px, con deshacer/rehacer. Los atajos no afectan
+la escritura ni los controles de selección. Las anotaciones ya aplanadas dentro de una
+captura no son objetos independientes en el collage.
+
+El zoom mantiene 10–200 %, con slider y acciones Acercar, Alejar, 100 %, Ajustar al
+área visible y Ctrl+rueda sobre el lienzo. Solo cambia la vista, no modelo ni exportación.
+
+
+Orden de capas confirmado por Toni: las imágenes de captura siempre quedan debajo de
+las anotaciones del collage, incluso si se añaden después. Dentro de cada grupo se
+conserva el orden de inserción. Mover objetos, deshacer o rehacer no cambia esta regla.
+Vista y exportación comparten el orden; el historial sigue siendo cronológico.
+
+
+Corrección de captura desde collage: la espera fija de 150 ms se sustituye por
+`HideForCaptureAsync`. Desactiva transiciones DWM solo en esta ventana, cierra el popup
+de color, oculta, cede al Dispatcher y espera `DwmFlush` fuera del hilo de UI. La interop
+está aislada en `WindowComposition`; errores HRESULT se propagan al aviso de captura
+existente y recuperan el collage. No modifica la configuración de animaciones del sistema.
+DwmFlush sincroniza actualizaciones pendientes de esta aplicación, no todo el escritorio.
+La corrección de rastros ha sido validada por Toni.
+Compilación final: `dist/v2-capture-clean`. Entrega aprobada para integración.

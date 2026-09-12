@@ -11,7 +11,9 @@ internal enum OverlayTool
     Pointer,
     Text,
     Arrow,
+    Line,
     Rectangle,
     FilledRectangle,
     Freehand,
+    Pixelation,
 }

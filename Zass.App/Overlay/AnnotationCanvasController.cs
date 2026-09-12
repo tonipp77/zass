@@ -5,6 +5,8 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using System.Windows.Media.Imaging;
+using Zass.App.Imaging;
 using Zass.Core.Annotations;
 using Zass.Core.Commands;
 using Zass.Interop;
@@ -32,6 +34,9 @@ internal sealed class AnnotationCanvasController
     private readonly Func<PhysicalPoint, Point> _toDip;
     private readonly double _scale;
     private readonly Dictionary<Annotation, FrameworkElement> _visuals = new();
+    private readonly Dictionary<Annotation, BitmapSource> _pixelationImages = new();
+    private BitmapSource? _pixelationSource;
+    public Func<BitmapSource>? CaptureUnderlay { get; set; }
 
     // In-progress drag annotation (rectangle/filled/arrow/freehand) not yet committed.
     private Annotation? _draft;
@@ -41,6 +46,7 @@ internal sealed class AnnotationCanvasController
     private PhysicalPoint _editPosition;
     private ArgbColor _editColor;
     private double _editFontSize;
+    private bool _editShadow;
 
     public AnnotationCanvasController(Canvas canvas, Func<PhysicalPoint, Point> toDip, double scale)
     {
@@ -64,17 +70,23 @@ internal sealed class AnnotationCanvasController
     // --- Drag-drawn annotations (rectangle, filled rectangle, arrow, freehand) ---
 
     /// <summary>Begins a draft annotation for a drag-drawn tool and shows it live on the canvas.</summary>
-    public void BeginDraft(OverlayTool tool, PhysicalPoint start, ArgbColor color, double thicknessPhysical)
+    public void BeginDraft(OverlayTool tool, PhysicalPoint start, ArgbColor color, double thicknessPhysical, bool hasShadow = false, ArrowStyle arrowStyle = ArrowStyle.Triangular)
     {
+        // Snapshot only confirmed content, before adding the pixelation draft to the canvas.
+        _pixelationSource = tool == OverlayTool.Pixelation ? CaptureUnderlay?.Invoke() : null;
         Annotation annotation = tool switch
         {
             OverlayTool.Rectangle => new RectangleAnnotation(start, start) { Thickness = thicknessPhysical },
             OverlayTool.FilledRectangle => new FilledRectangleAnnotation(start, start),
             OverlayTool.Arrow => new ArrowAnnotation(start, start) { Thickness = thicknessPhysical },
+            OverlayTool.Line => new LineAnnotation(start, start) { Thickness = thicknessPhysical },
+            OverlayTool.Pixelation => new PixelationAnnotation(start, start) { BlockSize = (int)thicknessPhysical },
             OverlayTool.Freehand => new FreehandAnnotation(new[] { start }) { Thickness = thicknessPhysical },
             _ => throw new NotSupportedException($"{tool} is not a drag-drawn tool."),
         };
         annotation.Color = color;
+        annotation.HasShadow = hasShadow && annotation is not PixelationAnnotation;
+        if (annotation is ArrowAnnotation arrow) arrow.Style = arrowStyle;
 
         _draft = annotation;
         FrameworkElement visual = CreateVisual(annotation);
@@ -103,6 +115,12 @@ internal sealed class AnnotationCanvasController
             case ArrowAnnotation ar:
                 ar.To = current;
                 break;
+            case LineAnnotation ln:
+                ln.To = current;
+                break;
+            case PixelationAnnotation px:
+                px.End = current;
+                break;
             case FreehandAnnotation fh:
                 PhysicalPoint last = fh.Points[^1];
                 if (current.DistanceTo(last) >= FreehandPointSpacingPhysical)
@@ -129,9 +147,11 @@ internal sealed class AnnotationCanvasController
 
         Annotation annotation = _draft;
         _draft = null;
+        _pixelationSource = null;
 
         if (!IsDraftMeaningful(annotation))
         {
+            _pixelationImages.Remove(annotation);
             if (_visuals.Remove(annotation, out FrameworkElement? visual))
             {
                 _canvas.Children.Remove(visual);
@@ -143,6 +163,7 @@ internal sealed class AnnotationCanvasController
         // The visual already exists and is registered; Execute adds the model and
         // Resync just restores the proper z-order.
         _history.Execute(new AddAnnotationCommand(_layer, annotation));
+        PrunePixelationImages();
         Resync();
         return true;
     }
@@ -152,6 +173,8 @@ internal sealed class AnnotationCanvasController
         RectangleAnnotation r => HasMinSpan(r.Start, r.End),
         FilledRectangleAnnotation fr => HasMinSpan(fr.Start, fr.End),
         ArrowAnnotation ar => ar.From.DistanceTo(ar.To) >= MinAnnotationSizePhysical,
+        LineAnnotation ln => ln.From.DistanceTo(ln.To) >= MinAnnotationSizePhysical,
+        PixelationAnnotation px => HasMinSpan(px.Start, px.End),
         FreehandAnnotation fh => fh.Points.Count >= 2 && PathLength(fh.Points) >= MinAnnotationSizePhysical,
         _ => false,
     };
@@ -173,7 +196,7 @@ internal sealed class AnnotationCanvasController
     // --- Inline text annotation ---
 
     /// <summary>Places an inline text editor at <paramref name="position"/> and gives it focus.</summary>
-    public void BeginText(PhysicalPoint position, ArgbColor color, double fontSizePhysical)
+    public void BeginText(PhysicalPoint position, ArgbColor color, double fontSizePhysical, bool hasShadow = false)
     {
         if (IsEditingText)
         {
@@ -208,6 +231,8 @@ internal sealed class AnnotationCanvasController
         _editPosition = position;
         _editColor = color;
         _editFontSize = fontSizePhysical;
+        _editShadow = hasShadow;
+        box.Effect = CreateShadow(hasShadow);
 
         // Defer focus to Input priority: the click that placed the box is still being
         // processed and the input manager would otherwise hand focus back to the window.
@@ -242,8 +267,9 @@ internal sealed class AnnotationCanvasController
 
         if (!string.IsNullOrWhiteSpace(box.Text))
         {
-            var annotation = new TextAnnotation(_editPosition, box.Text, _editFontSize) { Color = _editColor };
+            var annotation = new TextAnnotation(_editPosition, box.Text, _editFontSize) { Color = _editColor, HasShadow = _editShadow };
             _history.Execute(new AddAnnotationCommand(_layer, annotation));
+            PrunePixelationImages();
             Resync();
         }
 
@@ -275,6 +301,13 @@ internal sealed class AnnotationCanvasController
     {
         _history.Redo();
         Resync();
+    }
+
+    private void PrunePixelationImages()
+    {
+        // A new command discards redo; release raster effects that only existed in that branch.
+        foreach (Annotation annotation in _pixelationImages.Keys.Where(a => !_layer.Items.Contains(a)).ToArray())
+            _pixelationImages.Remove(annotation);
     }
 
     /// <summary>Reconciles the canvas elements with the current model state and z-order.</summary>
@@ -310,6 +343,8 @@ internal sealed class AnnotationCanvasController
         RectangleAnnotation => new Rectangle { IsHitTestVisible = false },
         FilledRectangleAnnotation => new Rectangle { IsHitTestVisible = false },
         ArrowAnnotation => new Path { IsHitTestVisible = false },
+        LineAnnotation => new Line { IsHitTestVisible = false },
+        PixelationAnnotation => new Image { IsHitTestVisible = false, Stretch = Stretch.Fill },
         FreehandAnnotation => new Polyline
         {
             IsHitTestVisible = false,
@@ -323,8 +358,27 @@ internal sealed class AnnotationCanvasController
 
     private void UpdateVisual(FrameworkElement visual, Annotation annotation)
     {
+        visual.Effect = CreateShadow(annotation.HasShadow && annotation is not PixelationAnnotation);
         switch (annotation)
         {
+            case PixelationAnnotation px:
+                var pixelImage = (Image)visual;
+                var bounds = px.Bounds;
+                Point origin = _toDip(new PhysicalPoint(bounds.X, bounds.Y));
+                Canvas.SetLeft(pixelImage, origin.X);
+                Canvas.SetTop(pixelImage, origin.Y);
+                pixelImage.Width = bounds.Width / _scale;
+                pixelImage.Height = bounds.Height / _scale;
+                RenderOptions.SetBitmapScalingMode(pixelImage, BitmapScalingMode.NearestNeighbor);
+                if (_draft == annotation && _pixelationSource is not null && !bounds.IsEmpty)
+                {
+                    int x = (int)Math.Round(origin.X * _scale), y = (int)Math.Round(origin.Y * _scale);
+                    var region = new Int32Rect(x, y, bounds.Width, bounds.Height);
+                    _pixelationImages[annotation] = PixelationRenderer.Create(_pixelationSource, region, px.BlockSize);
+                }
+                if (_pixelationImages.TryGetValue(annotation, out var bitmap)) pixelImage.Source = bitmap;
+                break;
+
             case RectangleAnnotation r:
                 var outline = (Rectangle)visual;
                 PlaceRectangle(outline, r.Start, r.End);
@@ -343,12 +397,27 @@ internal sealed class AnnotationCanvasController
             case ArrowAnnotation ar:
                 var path = (Path)visual;
                 double arrowThicknessDip = ar.Thickness / _scale;
-                path.Data = BuildArrowGeometry(_toDip(ar.From), _toDip(ar.To), arrowThicknessDip);
-                path.Stroke = Brush(ar.Color);
+                path.Data = BuildArrowGeometry(_toDip(ar.From), _toDip(ar.To), arrowThicknessDip, ar.Style);
+                path.Stroke = ar.Style == ArrowStyle.Open ? Brush(ar.Color) : null;
+                path.Fill = ar.Style == ArrowStyle.Open ? null : Brush(ar.Color);
                 path.StrokeThickness = arrowThicknessDip;
-                path.StrokeStartLineCap = PenLineCap.Round;
-                path.StrokeEndLineCap = PenLineCap.Round;
-                path.StrokeLineJoin = PenLineJoin.Round;
+                path.StrokeStartLineCap = PenLineCap.Flat;
+                path.StrokeEndLineCap = PenLineCap.Flat;
+                path.StrokeLineJoin = PenLineJoin.Miter;
+                break;
+
+            case LineAnnotation ln:
+                var line = (Line)visual;
+                Point from = _toDip(ln.From);
+                Point to = _toDip(ln.To);
+                line.X1 = from.X;
+                line.Y1 = from.Y;
+                line.X2 = to.X;
+                line.Y2 = to.Y;
+                line.Stroke = Brush(ln.Color);
+                line.StrokeThickness = ln.Thickness / _scale;
+                line.StrokeStartLineCap = PenLineCap.Round;
+                line.StrokeEndLineCap = PenLineCap.Round;
                 break;
 
             case FreehandAnnotation fh:
@@ -391,41 +460,55 @@ internal sealed class AnnotationCanvasController
         rect.Height = Math.Abs(b.Y - a.Y);
     }
 
-    /// <summary>Builds an open (two-barb) arrowhead plus shaft, in DIP space.</summary>
-    private static Geometry BuildArrowGeometry(Point from, Point to, double thicknessDip)
+    private System.Windows.Media.Effects.Effect? CreateShadow(bool enabled)
     {
-        double dx = to.X - from.X;
-        double dy = to.Y - from.Y;
-        double length = Math.Sqrt((dx * dx) + (dy * dy));
-
-        var geometry = new StreamGeometry();
-        using (StreamGeometryContext ctx = geometry.Open())
+        if (!enabled) return null;
+        var effect = new System.Windows.Media.Effects.DropShadowEffect
         {
-            ctx.BeginFigure(from, false, false);
-            ctx.LineTo(to, true, true);
+            Color = Colors.Black,
+            BlurRadius = 4 / _scale,
+            ShadowDepth = 3 / _scale,
+            Direction = 315,
+            Opacity = 0.45,
+        };
+        effect.Freeze();
+        return effect;
+    }
 
-            if (length > 0.001)
+    private Geometry BuildArrowGeometry(Point from, Point to, double thickness, ArrowStyle style)
+    {
+        Vector direction = to - from;
+        double length = direction.Length;
+        if (length < 0.001) return Geometry.Empty;
+        direction.Normalize();
+        Vector normal = new(-direction.Y, direction.X);
+        double head = Math.Min(length * 0.65, Math.Max(8 / _scale, thickness * 3.5));
+        Point neck = to - direction * head;
+        double wing = head * 0.48;
+        var geometry = new StreamGeometry();
+        using (var context = geometry.Open())
+        {
+            if (style == ArrowStyle.Open)
             {
-                double ux = dx / length;
-                double uy = dy / length;
-                double head = Math.Min(length, Math.Max(8.0, thicknessDip * 3.5));
-                const double spread = 0.5; // ~28.6° each side
-                double cos = Math.Cos(spread);
-                double sin = Math.Sin(spread);
-
-                var barb1 = new Point(
-                    to.X - (head * ((ux * cos) - (uy * sin))),
-                    to.Y - (head * ((uy * cos) + (ux * sin))));
-                var barb2 = new Point(
-                    to.X - (head * ((ux * cos) + (uy * sin))),
-                    to.Y - (head * ((uy * cos) - (ux * sin))));
-
-                ctx.BeginFigure(barb1, false, false);
-                ctx.LineTo(to, true, true);
-                ctx.LineTo(barb2, true, true);
+                context.BeginFigure(from, false, false);
+                context.LineTo(to, true, false);
+                context.BeginFigure(neck + normal * wing, false, false);
+                context.LineTo(to, true, false);
+                context.LineTo(neck - normal * wing, true, false);
+            }
+            else
+            {
+                double half = Math.Min(thickness / 2, wing * 0.5);
+                double tail = style == ArrowStyle.Tapered ? 0 : half;
+                context.BeginFigure(from + normal * tail, true, true);
+                context.LineTo(neck + normal * half, true, false);
+                context.LineTo(neck + normal * wing, true, false);
+                context.LineTo(to, true, false);
+                context.LineTo(neck - normal * wing, true, false);
+                context.LineTo(neck - normal * half, true, false);
+                context.LineTo(from - normal * tail, true, false);
             }
         }
-
         geometry.Freeze();
         return geometry;
     }

@@ -253,6 +253,26 @@ Instalador Inno Setup y/o build portable self-contained. Firma de código diferi
 
 ## Hito v1
 
+### 🔄 Ampliación feature-1 — Línea y collage libre
+
+- **Solicitud:** Toni, 2026-09-08. Se desarrolla en `feature-1`, conservando el trabajo
+  local previo de empaquetado. Esta petición es independiente de validar el Incremento 8.
+- **Implementado:** línea (L), color/grosor e historial; añadir selección anotada al
+  collage; lienzo libre con zoom, quitar/vaciar, undo/redo; nuevas capturas, recuperación
+  desde bandeja y finalización mediante copia o PNG/JPG.
+- **Decisiones confirmadas:** disposición libre y conservación en memoria durante la sesión.
+- **Ampliación posterior solicitada:** tres flechas de collage (curva, recta, acodada),
+  texto, color/tamaño e historial compartido con imágenes; herramienta de pixelado (P)
+  de recortes con bloques configurables e historial de objeto completo.
+- **Verificación automática:** compilación sin errores ni avisos; 130 tests unitarios
+  correctos. Verificación adicional WPF de construcción del editor y composición de
+  píxeles con DPI distintos, espacios blancos, solapamiento y exportación tras undo.
+  Comprobaciones WPF adicionales de extremos de flechas en varias direcciones, texto,
+  pixelado a 150% con origen de monitor desplazado y resultado idéntico al rehacer.
+- **Estado:** implementado; commit y push a `feature-1` autorizados expresamente por Toni
+  el 2026-09-09. La validación manual no se ha registrado todavía.
+- **Plan de pruebas:** `Zass-Feature-1-Pruebas.md`.
+
 La v1 se considera completa cuando los Incrementos 1–7 estén validados contra los
 **criterios de aceptación globales del PRD (§10)**. El Incremento 8 es distribución.
 
@@ -260,3 +280,86 @@ La v1 se considera completa cuando los Incrementos 1–7 estén validados contra
 
 Multimonitor, captura de ventana/retardo, nube/compartir, selector de fuente, autoactualización,
 firma de código, vídeo/GIF y edición avanzada. Ver PRD §12 (roadmap v2+).
+
+
+## Evolución a v2.0 (solicitud de Toni, 2026-09-12)
+
+Esta petición amplía el alcance histórico del esqueleto y de v1. No implica validar
+el empaquetado ni las pruebas manuales anteriores. Se mantiene la entrega incremental,
+sin commit ni push hasta confirmación de Toni.
+
+### ✅ V2.1 — Acabados de flecha y sombra en captura
+- Implementado: selector triangular (predeterminado), abierto angular y cuerpo afinado.
+  Los tres estilos fueron elegidos expresamente por Toni en esta sesión.
+- Sombra opcional para nuevas flechas, líneas, rectángulos, rellenos, dibujo libre y texto.
+  El pixelado no muestra la opción ni recibe el efecto. Se conserva al deshacer/rehacer.
+- Preferencias conservadas durante la captura; no se modifica la persistencia de ajustes.
+- Compilación correcta; aviso NU1900 por consulta de vulnerabilidades bloqueada por red.
+- Validado manualmente por Toni el 2026-09-12; 130/130 pruebas automáticas superadas.
+  Commit y push a `feature-1` autorizados expresamente. Pruebas: `Zass-V2-Pruebas.md`.
+
+### ✅ V2.2 — Distribución del editor de collage y buffer de sesión
+- Herramientas arriba, opciones generales a la izquierda, propiedades contextuales a
+  la derecha, lienzo central y miniaturas de capturas disponibles abajo.
+- Mantener lienzo libre, resolución original, zoom visual e historial de objetos.
+- Decisiones confirmadas por Toni: conservar también las capturas copiadas/guardadas
+  directamente; copiar/guardar el collage mantiene editor, buffer e historial hasta salir de Zass.
+- Implementado: distribución en cinco zonas; Flechas agrupa los tres estilos existentes
+  en el panel derecho; propiedades contextuales de texto y selección; tira de miniaturas
+  con reinserción por clic, compartiendo el bitmap original. Vaciar lienzo conserva el buffer.
+- Límite de memoria existente de 64 millones de píxeles aplicado al buffer; una captura
+  directa que exceda el límite se copia/guarda, pero se avisa de que no pudo retenerse.
+- Verificado: compilación aislada correcta, 130/130 tests, comprobación WPF de construcción,
+  buffer, reinserción, undo, propiedades, exportación, layout mínimo y liberación al cerrar.
+- Entrega aprobada por Toni mediante autorización expresa de commit y push a `feature-1`.
+  Plan de pruebas: `Zass-V2-Collage-Pruebas.md`.
+  Sellos, pasos, rótulos y nuevos estilos/sombras de collage siguen en V2.3/V2.4.
+
+### ✅ V2.3 — Sellos, pasos y rótulos en collage
+- Sellos: check, aspa, prohibido, +, -, ! y ?.
+- Pasos con número o letra introducidos manualmente; círculo y lágrima lateral.
+- Rótulos con texto libre: rectángulo blanco con borde y bocadillo de cómic.
+- Objetos editables con sombra opcional, historial y exportación coherente.
+
+### ✅ V2.4 — Texto, flechas y sombras del collage
+- Ampliar texto a partir de la referencia: fuente, tamaño, relleno, contorno y sombra.
+- Ampliar flechas tomando como referencia estilos continuos/discontinuos, puntas,
+  anchura y opacidad, conservando los estilos curvo, recto y acodado existentes.
+- Sombra opcional para todos los elementos añadidos; concretar controles de estilo
+  con Toni antes de implementar decisiones que los documentos no definan.
+
+
+**Entrega conjunta V2.3/V2.4 autorizada por Toni:** sellos, pasos, rótulos y estilos
+se implementan en el mismo incremento por petición expresa. Incluye siete sellos;
+pasos circulares/lágrima con contenido manual (hasta cuatro caracteres); rótulos blancos
+con borde o bocadillo; cinco fuentes, negrita/cursiva y contorno blanco para texto;
+puntas rellena/abierta/doble y trazo discontinuo en las tres flechas. Tamaño 8–96,
+opacidad 10–100 % y sombra opcional por anotación. Propiedades aplicadas a nuevos objetos.
+
+Compilación aislada en `dist/v2-tools`, 130 tests unitarios y comprobaciones WPF de
+88 variantes, límites, previsualización/exportación e historial. Sin dependencias nuevas.
+Plan manual: `Zass-V2-Herramientas-Pruebas.md`. Validado por Toni; commit, push y merges a dev/main autorizados.
+
+
+Correcciones tras pruebas de Toni: contorno blanco detrás del relleno para conservar
+el color en texto regular; selección automática tras crear objetos o insertar capturas;
+movimiento fino con flechas (1 px) y Mayús+flechas (10 px); zoom visible encima del lienzo
+con Acercar/Alejar/100 %/Ajustar y Ctrl+rueda. Validado por Toni.
+Compilación actual: `dist/v2-fixes`. Comprobación WPF ampliada con regresión del relleno,
+selección automática, movimiento por teclado e invariancia del modelo al cambiar zoom.
+
+
+Corrección de capas solicitada por Toni: capturas siempre debajo de anotaciones,
+con orden estable dentro de cada grupo y sin alterar el historial cronológico.
+Vista/exportación usan el mismo orden. Nueva compilación: `dist/v2-layers`.
+Validado por Toni.
+
+
+Corrección de captura desde collage: la espera fija de 150 ms se sustituye por
+`HideForCaptureAsync`. Desactiva transiciones DWM solo en esta ventana, cierra el popup
+de color, oculta, cede al Dispatcher y espera `DwmFlush` fuera del hilo de UI. La interop
+está aislada en `WindowComposition`; errores HRESULT se propagan al aviso de captura
+existente y recuperan el collage. No modifica la configuración de animaciones del sistema.
+DwmFlush sincroniza actualizaciones pendientes de esta aplicación, no todo el escritorio.
+Corrección de rastros validada por Toni.
+Compilación final: `dist/v2-capture-clean`; 131 tests y comprobaciones WPF correctos.
