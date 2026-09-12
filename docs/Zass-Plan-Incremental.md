@@ -298,12 +298,22 @@ sin commit ni push hasta confirmación de Toni.
 - Validado manualmente por Toni el 2026-09-12; 130/130 pruebas automáticas superadas.
   Commit y push a `feature-1` autorizados expresamente. Pruebas: `Zass-V2-Pruebas.md`.
 
-### ⬜ V2.2 — Distribución del editor de collage y buffer de sesión
+### ✅ V2.2 — Distribución del editor de collage y buffer de sesión
 - Herramientas arriba, opciones generales a la izquierda, propiedades contextuales a
   la derecha, lienzo central y miniaturas de capturas disponibles abajo.
 - Mantener lienzo libre, resolución original, zoom visual e historial de objetos.
-- Concretar antes de implementar si el buffer conserva también capturas copiadas/guardadas
-  directamente y si exportar termina la sesión, como actualmente, o permite seguir editando.
+- Decisiones confirmadas por Toni: conservar también las capturas copiadas/guardadas
+  directamente; copiar/guardar el collage mantiene editor, buffer e historial hasta salir de Zass.
+- Implementado: distribución en cinco zonas; Flechas agrupa los tres estilos existentes
+  en el panel derecho; propiedades contextuales de texto y selección; tira de miniaturas
+  con reinserción por clic, compartiendo el bitmap original. Vaciar lienzo conserva el buffer.
+- Límite de memoria existente de 64 millones de píxeles aplicado al buffer; una captura
+  directa que exceda el límite se copia/guarda, pero se avisa de que no pudo retenerse.
+- Verificado: compilación aislada correcta, 130/130 tests, comprobación WPF de construcción,
+  buffer, reinserción, undo, propiedades, exportación, layout mínimo y liberación al cerrar.
+- Entrega aprobada por Toni mediante autorización expresa de commit y push a `feature-1`.
+  Plan de pruebas: `Zass-V2-Collage-Pruebas.md`.
+  Sellos, pasos, rótulos y nuevos estilos/sombras de collage siguen en V2.3/V2.4.
 
 ### ⬜ V2.3 — Sellos, pasos y rótulos en collage
 - Sellos: check, aspa, prohibido, +, -, ! y ?.

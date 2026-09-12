@@ -205,19 +205,19 @@
   <data name="ToolLine" xml:space="preserve"><value>Línea (L)</value></data>
   <data name="ToolCollage" xml:space="preserve"><value>Añadir recorte al collage</value></data>
   <data name="CollageTitle" xml:space="preserve"><value>Collage</value></data>
-  <data name="CollageHint" xml:space="preserve"><value>Arrastra los recortes para colocarlos. Se conserva su resolución original y los espacios se exportan en blanco. Cierra u oculta para continuar durante esta sesión.</value></data>
+  <data name="CollageHint" xml:space="preserve"><value>Coloca las imágenes libremente a su resolución original. Copiar o guardar conserva el trabajo hasta salir de Zass.</value></data>
   <data name="CollageCapture" xml:space="preserve"><value>Nueva captura</value></data>
   <data name="CollageRemove" xml:space="preserve"><value>Quitar objeto</value></data>
   <data name="CollageUndo" xml:space="preserve"><value>Deshacer</value></data>
   <data name="CollageRedo" xml:space="preserve"><value>Rehacer</value></data>
   <data name="CollageClear" xml:space="preserve"><value>Vaciar lienzo</value></data>
-  <data name="CollageCopy" xml:space="preserve"><value>Terminar y copiar</value></data>
-  <data name="CollageSave" xml:space="preserve"><value>Terminar y guardar</value></data>
+  <data name="CollageCopy" xml:space="preserve"><value>Copiar collage</value></data>
+  <data name="CollageSave" xml:space="preserve"><value>Guardar collage</value></data>
   <data name="CollageHide" xml:space="preserve"><value>Ocultar</value></data>
   <data name="CollageZoom" xml:space="preserve"><value>Zoom</value></data>
   <data name="CollageStatus" xml:space="preserve"><value>{0} objetos · Salida: {1} × {2} px</value></data>
   <data name="CollageCopyError" xml:space="preserve"><value>No se pudo copiar el collage. Inténtalo de nuevo; se conservan tus recortes.</value></data>
-  <data name="CollageAddError" xml:space="preserve"><value>No se pudo añadir el recorte. El lienzo y los recortes retenidos (incluido el historial) tienen un límite de 64 millones de píxeles, con un lado máximo de 32767 píxeles. Termina el collage actual o utiliza un recorte más pequeño.</value></data>
+  <data name="CollageAddError" xml:space="preserve"><value>No se pudo añadir el recorte. El lienzo y el buffer de sesión admiten hasta 64 millones de píxeles cada uno. Usa un recorte menor, vacía el lienzo o reinicia Zass para liberar el buffer.</value></data>
   <data name="ToolPixelation" xml:space="preserve"><value>Pixelar (P)</value></data>
   <data name="LabelPixelSize" xml:space="preserve"><value>Bloques</value></data>
   <data name="CollagePointer" xml:space="preserve"><value>Seleccionar / mover</value></data>
@@ -231,4 +231,15 @@
   <data name="ArrowOpen" xml:space="preserve"><value>Punta abierta</value></data>
   <data name="ArrowTapered" xml:space="preserve"><value>Cuerpo afinado</value></data>
   <data name="ArrowStyleLabel" xml:space="preserve"><value>Estilo de flecha</value></data>
+  <data name="CollageGeneral" xml:space="preserve"><value>Lienzo</value></data>
+  <data name="CollageProperties" xml:space="preserve"><value>Propiedades de herramienta</value></data>
+  <data name="CollagePointerHint" xml:space="preserve"><value>Haz clic en un objeto para seleccionarlo. Arrástralo para moverlo o quítalo con los controles de la izquierda.</value></data>
+  <data name="CollageBuffer" xml:space="preserve"><value>Capturas de la sesión</value></data>
+  <data name="CollageBufferHint" xml:space="preserve"><value>Haz clic en una captura para añadirla al lienzo.</value></data>
+  <data name="CollageBufferEmpty" xml:space="preserve"><value>Tu próxima captura copiada, guardada o añadida aparecerá aquí.</value></data>
+  <data name="CollageArrows" xml:space="preserve"><value>Flechas</value></data>
+  <data name="CollageInsertCapture" xml:space="preserve"><value>Añadir esta captura al lienzo</value></data>
+  <data name="CollageCaptureDimensions" xml:space="preserve"><value>{0} · {1} × {2} px</value></data>
+  <data name="CollageExportComplete" xml:space="preserve"><value>Exportación completada. Puedes seguir editando.</value></data>
+  <data name="CollageBufferFull" xml:space="preserve"><value>La captura se ha copiado o guardado, pero el buffer de sesión está lleno (64 millones de píxeles). No se ha podido conservar para el collage. Reinicia Zass para liberar la sesión.</value></data>
 </root>

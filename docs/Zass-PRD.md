@@ -343,4 +343,20 @@ ni servicios de la aplicación fotografiada. Desarrollo por incrementos en el pl
 - **RF-36 — Estilos de collage:** ampliar texto y flechas según referencias; sombra opcional
   en los elementos añadidos. Preservar objetos editables e historial hasta exportar.
 
-RF-30/31 implementados y validados por Toni el 2026-09-12. RF-32 a RF-36 pendientes.
+RF-30/31 implementados y validados por Toni el 2026-09-12. RF-32 implementado y
+entrega aprobada por Toni para commit y push. RF-33 a RF-36 pendientes.
+
+### Sesión de collage v2: decisiones confirmadas por Toni
+
+Esta ampliación sustituye la finalización automática de RF-25: copiar/guardar el collage
+mantiene el editor, sus objetos, historial y capturas hasta salir de Zass. Cerrar la ventana
+la oculta. Vaciar lienzo solo quita objetos y puede deshacerse; conserva las miniaturas.
+Todas las capturas exportadas correctamente desde el overlay (copiar, guardar o añadir
+al collage) quedan en memoria, incluidas sus anotaciones. Cancelar no retiene una captura.
+La tira inferior permite insertar otra instancia por clic, a resolución original. Añadir
+al collage sigue colocando el recorte directamente además de retenerlo en la tira.
+
+El buffer mantiene el límite existente de 64 millones de píxeles. Reinsertar no duplica
+el bitmap ni consume ese presupuesto otra vez. Si una captura directa no cabe, la copia
+o guardado sigue siendo válido y se notifica que no pudo conservarse en el buffer.
+El lienzo mantiene su límite independiente de superficie y dimensión de RF-24/25.

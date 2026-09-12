@@ -22,6 +22,18 @@ internal static class Strings
     public static string ArrowTapered => Get(nameof(ArrowTapered));
     public static string ArrowStyleLabel => Get(nameof(ArrowStyleLabel));
 
+    public static string CollageGeneral => Get(nameof(CollageGeneral));
+    public static string CollageProperties => Get(nameof(CollageProperties));
+    public static string CollagePointerHint => Get(nameof(CollagePointerHint));
+    public static string CollageBuffer => Get(nameof(CollageBuffer));
+    public static string CollageBufferHint => Get(nameof(CollageBufferHint));
+    public static string CollageBufferEmpty => Get(nameof(CollageBufferEmpty));
+    public static string CollageArrows => Get(nameof(CollageArrows));
+    public static string CollageInsertCapture => Get(nameof(CollageInsertCapture));
+    public static string CollageCaptureDimensions => Get(nameof(CollageCaptureDimensions));
+    public static string CollageExportComplete => Get(nameof(CollageExportComplete));
+    public static string CollageBufferFull => Get(nameof(CollageBufferFull));
+
     public static string ToolCollage => Get(nameof(ToolCollage));
     public static string CollageTitle => Get(nameof(CollageTitle));
     public static string CollageHint => Get(nameof(CollageHint));

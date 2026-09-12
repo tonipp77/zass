@@ -131,6 +131,7 @@ public partial class App : Application
                 _settings.JpegQuality);
 
             var overlay = new OverlayWindow(capture, options);
+            overlay.CaptureExported += image => EnsureCollage().RetainCapture(image);
             overlay.AddToCollageRequested += image =>
             {
                 EnsureCollage().AddCrop(image);

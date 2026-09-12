@@ -132,6 +132,18 @@ public partial class OverlayWindow : Window
     public double LastTextSize => _currentTextSize;
 
     public event Action<System.Windows.Media.Imaging.BitmapSource>? AddToCollageRequested;
+    public event Action<System.Windows.Media.Imaging.BitmapSource>? CaptureExported;
+
+    private void RetainExportedCapture(System.Windows.Media.Imaging.BitmapSource image)
+    {
+        try { CaptureExported?.Invoke(image); }
+        catch (ArgumentOutOfRangeException ex)
+        {
+            Trace.TraceWarning($"Zass: capture buffer is full: {ex}");
+            MessageBox.Show(this, Strings.CollageBufferFull, Strings.CollageTitle,
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
 
     private int HandleHitRadiusPhysical => (int)Math.Round(HandleHitRadiusDip * _scaleX);
 
@@ -802,6 +814,7 @@ public partial class OverlayWindow : Window
         _annotations.CommitText();
         var bmp = ComposeForExport();
         CopyToClipboardWithRetry(bmp);
+        RetainExportedCapture(bmp);
         Close();
     }
 
@@ -844,6 +857,7 @@ public partial class OverlayWindow : Window
             System.Windows.Media.Imaging.BitmapSource image = ComposeForExport();
             ImageExporter.Save(
                 image, dialog.FileName, ExportNaming.FormatFromExtension(dialog.FileName), _jpegQuality);
+            RetainExportedCapture(image);
         }
         catch (Exception ex)
         {

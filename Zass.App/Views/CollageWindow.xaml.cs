@@ -22,6 +22,8 @@ public partial class CollageWindow : Window
     private readonly CollageDocument _document = new();
     private readonly Dictionary<Guid, BitmapSource> _images = new();
     private readonly Dictionary<Guid, Image> _visuals = new();
+    private readonly List<BitmapSource> _captures = new();
+    private CollageDecorationKind _lastArrowTool = CollageDecorationKind.CurvedArrow;
     private readonly Func<(ImageExportFormat Format, int Quality)> _exportOptions;
     private Guid? _selected;
     private CollageItem? _dragItem;
@@ -63,6 +65,8 @@ public partial class CollageWindow : Window
             Surface.Children.Clear();
             _visuals.Clear();
             _images.Clear();
+            _captures.Clear();
+            CaptureStrip.Children.Clear();
         };
         PreviewKeyDown += OnKeyDown;
         Refresh();
@@ -77,15 +81,61 @@ public partial class CollageWindow : Window
         return CommitText();
     }
 
+    public void RetainCapture(BitmapSource image)
+    {
+        ValidateCaptureBudget(image);
+        if (_captures.Contains(image)) return;
+        if (image.CanFreeze) image.Freeze();
+        _captures.Add(image);
+        RefreshCaptureStrip();
+    }
+
+    private void ValidateCaptureBudget(BitmapSource image)
+    {
+        // Duplicated canvas objects share one immutable bitmap with the capture strip.
+        long pixels = _captures.Sum(i => (long)i.PixelWidth * i.PixelHeight);
+        if (!_captures.Contains(image)) pixels += (long)image.PixelWidth * image.PixelHeight;
+        if (pixels > CollageDocument.MaxPixels) throw new ArgumentOutOfRangeException(nameof(image));
+    }
+
     public void AddCrop(BitmapSource image)
     {
-        // Keep removed images available for undo, with a bounded session memory budget.
-        if (_images.Values.Sum(i => (long)i.PixelWidth * i.PixelHeight) + (long)image.PixelWidth * image.PixelHeight > CollageDocument.MaxPixels)
-            throw new ArgumentOutOfRangeException(nameof(image));
+        ValidateCaptureBudget(image);
         Guid id = _document.Add(image.PixelWidth, image.PixelHeight);
+        RetainCapture(image);
         _images.Add(id, image);
         _selected = id;
         Refresh();
+    }
+
+    private void RefreshCaptureStrip()
+    {
+        CaptureStrip.Children.Clear();
+        BufferEmpty.Visibility = _captures.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        for (int index = 0; index < _captures.Count; index++)
+        {
+            BitmapSource bitmap = _captures[index];
+            var content = new StackPanel();
+            content.Children.Add(new Image { Source = bitmap, Width = 112, Height = 62, Stretch = Stretch.Uniform });
+            content.Children.Add(new TextBlock
+            {
+                Text = string.Format(CultureInfo.CurrentCulture, Strings.CollageCaptureDimensions,
+                    index + 1, bitmap.PixelWidth, bitmap.PixelHeight),
+                FontSize = 11, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 4, 0, 0),
+            });
+            var button = new Button
+            {
+                Content = content, ToolTip = Strings.CollageInsertCapture,
+                Padding = new Thickness(6), Margin = new Thickness(0, 0, 8, 0),
+            };
+            button.Click += (_, _) =>
+            {
+                if (_exporting || !PrepareForCapture()) return;
+                try { AddCrop(bitmap); }
+                catch (ArgumentOutOfRangeException ex) { ReportError(ex, Strings.CollageAddError); }
+            };
+            CaptureStrip.Children.Add(button);
+        }
     }
 
     public void Reveal()
@@ -116,6 +166,8 @@ public partial class CollageWindow : Window
         Refresh();
     }
 
+    private void OnArrowTool(object sender, RoutedEventArgs e) => SetTool(_lastArrowTool);
+
     private void OnPointerTool(object sender, RoutedEventArgs e) => SetTool(null);
     private void OnCurvedTool(object sender, RoutedEventArgs e) => SetTool(CollageDecorationKind.CurvedArrow);
     private void OnStraightTool(object sender, RoutedEventArgs e) => SetTool(CollageDecorationKind.StraightArrow);
@@ -131,6 +183,13 @@ public partial class CollageWindow : Window
         StraightTool.IsChecked = tool == CollageDecorationKind.StraightArrow;
         ElbowTool.IsChecked = tool == CollageDecorationKind.ElbowArrow;
         TextTool.IsChecked = tool == CollageDecorationKind.Text;
+        bool isArrow = tool is not null && tool != CollageDecorationKind.Text;
+        if (isArrow) _lastArrowTool = tool!.Value;
+        ArrowTool.IsChecked = isArrow;
+        ArrowStyles.Visibility = isArrow ? Visibility.Visible : Visibility.Collapsed;
+        ToolProperties.Visibility = tool is null ? Visibility.Collapsed : Visibility.Visible;
+        PointerHint.Visibility = tool is null ? Visibility.Visible : Visibility.Collapsed;
+        if (tool is null) ColorPopup.IsOpen = false;
         SizeLabel.Text = tool == CollageDecorationKind.Text ? Strings.LabelTextSize : Strings.LabelThickness;
         Surface.Cursor = tool is null ? Cursors.Arrow : tool == CollageDecorationKind.Text ? Cursors.IBeam : Cursors.Cross;
         foreach (Image image in _visuals.Values) image.Cursor = tool is null ? Cursors.SizeAll : Surface.Cursor;
@@ -220,6 +279,14 @@ public partial class CollageWindow : Window
     private void RefreshLanguage()
     {
         Title = Heading.Text = Strings.CollageTitle;
+        GeneralHeading.Text = Strings.CollageGeneral;
+        PropertiesHeading.Text = Strings.CollageProperties;
+        PointerHint.Text = Strings.CollagePointerHint;
+        BufferHeading.Text = Strings.CollageBuffer;
+        BufferHint.Text = Strings.CollageBufferHint;
+        BufferEmpty.Text = Strings.CollageBufferEmpty;
+        ArrowTool.Content = Strings.CollageArrows;
+        RefreshCaptureStrip();
         Hint.Text = Strings.CollageHint;
         CaptureButton.Content = Strings.CollageCapture;
         RemoveButton.Content = Strings.CollageRemove;
@@ -280,6 +347,8 @@ public partial class CollageWindow : Window
         ClearButton.IsEnabled = CopyButton.IsEnabled = SaveButton.IsEnabled = !_exporting && _document.Items.Count > 0;
         Surface.IsEnabled = !_exporting;
         DrawingTools.IsEnabled = !_exporting;
+        ToolProperties.IsEnabled = !_exporting;
+        CaptureStrip.IsEnabled = !_exporting;
     }
 
     private void UpdateSelectionFrame()
@@ -386,7 +455,7 @@ public partial class CollageWindow : Window
     {
         if (ZoomTransform is null) return;
         ZoomTransform.ScaleX = ZoomTransform.ScaleY = e.NewValue;
-        ZoomValue.Text = e.NewValue.ToString("P0", CultureInfo.CurrentCulture);
+        if (ZoomValue is not null) ZoomValue.Text = e.NewValue.ToString("P0", CultureInfo.CurrentCulture);
         if (_selectionFrame is not null) _selectionFrame.StrokeThickness = 2 / e.NewValue;
     }
 
@@ -440,7 +509,7 @@ public partial class CollageWindow : Window
                 try { Clipboard.SetImage(image); break; }
                 catch (COMException) when (attempt < 4) { await Task.Delay(50); }
             }
-            FinishSession();
+            Status.Text = Strings.CollageExportComplete;
         }
         catch (Exception ex) { ReportError(ex, Strings.CollageCopyError); }
         finally { _exporting = false; UpdateButtons(); }
@@ -467,17 +536,10 @@ public partial class CollageWindow : Window
             if (dialog.ShowDialog(this) != true) return;
             ImageExporter.Save(CollageComposer.Compose(_document, _images), dialog.FileName,
                 ExportNaming.FormatFromExtension(dialog.FileName), options.Quality);
-            FinishSession();
+            Status.Text = Strings.CollageExportComplete;
         }
         catch (Exception ex) { ReportError(ex, Strings.SaveErrorMessage); }
         finally { _exporting = false; UpdateButtons(); }
-    }
-
-    private void FinishSession()
-    {
-        // A successful explicit finish releases the session, including undo bitmap references.
-        _allowClose = true;
-        Close();
     }
 
     private void ReportError(Exception ex, string message)

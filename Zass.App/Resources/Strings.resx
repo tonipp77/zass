@@ -205,19 +205,19 @@
   <data name="ToolLine" xml:space="preserve"><value>Line (L)</value></data>
   <data name="ToolCollage" xml:space="preserve"><value>Add crop to collage</value></data>
   <data name="CollageTitle" xml:space="preserve"><value>Collage</value></data>
-  <data name="CollageHint" xml:space="preserve"><value>Drag crops to arrange them. Original resolution is preserved; empty spaces export as white. Close or hide to continue later during this session.</value></data>
+  <data name="CollageHint" xml:space="preserve"><value>Arrange images freely at their original resolution. Copying or saving keeps your work available until you quit Zass.</value></data>
   <data name="CollageCapture" xml:space="preserve"><value>New capture</value></data>
   <data name="CollageRemove" xml:space="preserve"><value>Remove object</value></data>
   <data name="CollageUndo" xml:space="preserve"><value>Undo</value></data>
   <data name="CollageRedo" xml:space="preserve"><value>Redo</value></data>
   <data name="CollageClear" xml:space="preserve"><value>Clear canvas</value></data>
-  <data name="CollageCopy" xml:space="preserve"><value>Finish and copy</value></data>
-  <data name="CollageSave" xml:space="preserve"><value>Finish and save</value></data>
+  <data name="CollageCopy" xml:space="preserve"><value>Copy collage</value></data>
+  <data name="CollageSave" xml:space="preserve"><value>Save collage</value></data>
   <data name="CollageHide" xml:space="preserve"><value>Hide</value></data>
   <data name="CollageZoom" xml:space="preserve"><value>Zoom</value></data>
   <data name="CollageStatus" xml:space="preserve"><value>{0} objects · Output: {1} × {2} px</value></data>
   <data name="CollageCopyError" xml:space="preserve"><value>The collage could not be copied. Try again; your crops are preserved.</value></data>
-  <data name="CollageAddError" xml:space="preserve"><value>The crop could not be added. The canvas and retained crops (including undo history) are limited to 64 million pixels, with a maximum side of 32767 pixels. Finish the current collage or use a smaller crop.</value></data>
+  <data name="CollageAddError" xml:space="preserve"><value>Could not add the capture. The canvas and session buffer each allow up to 64 million pixels. Use a smaller crop, clear the canvas or restart Zass to release the buffer.</value></data>
   <data name="ToolPixelation" xml:space="preserve"><value>Pixelate (P)</value></data>
   <data name="LabelPixelSize" xml:space="preserve"><value>Blocks</value></data>
   <data name="CollagePointer" xml:space="preserve"><value>Select / move</value></data>
@@ -231,4 +231,15 @@
   <data name="ArrowOpen" xml:space="preserve"><value>Angular open tip</value></data>
   <data name="ArrowTapered" xml:space="preserve"><value>Tapered body</value></data>
   <data name="ArrowStyleLabel" xml:space="preserve"><value>Arrow style</value></data>
+  <data name="CollageGeneral" xml:space="preserve"><value>Canvas</value></data>
+  <data name="CollageProperties" xml:space="preserve"><value>Tool properties</value></data>
+  <data name="CollagePointerHint" xml:space="preserve"><value>Click an object to select it. Drag to move it, or remove it using the controls on the left.</value></data>
+  <data name="CollageBuffer" xml:space="preserve"><value>Session captures</value></data>
+  <data name="CollageBufferHint" xml:space="preserve"><value>Click a capture to add it to the canvas.</value></data>
+  <data name="CollageBufferEmpty" xml:space="preserve"><value>Your next copied, saved or added capture will appear here.</value></data>
+  <data name="CollageArrows" xml:space="preserve"><value>Arrows</value></data>
+  <data name="CollageInsertCapture" xml:space="preserve"><value>Add this capture to the canvas</value></data>
+  <data name="CollageCaptureDimensions" xml:space="preserve"><value>{0} · {1} × {2} px</value></data>
+  <data name="CollageExportComplete" xml:space="preserve"><value>Export complete. You can continue editing.</value></data>
+  <data name="CollageBufferFull" xml:space="preserve"><value>The capture was copied or saved, but the session buffer is full (64 million pixels). It could not be retained for the collage. Restart Zass to release the session.</value></data>
 </root>

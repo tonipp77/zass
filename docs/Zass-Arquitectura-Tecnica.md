@@ -371,3 +371,24 @@ a DIP. `DropShadowEffect` se aplica por objeto (negro, opacidad 0,45, desenfoque
 desplazamiento 3 px hacia abajo/derecha). No se aplica a `PixelationAnnotation`.
 La exportación sigue renderizando el mismo canvas de anotaciones, sin controles.
 No se añaden dependencias ni se cambian TFM, captura o persistencia.
+
+
+## 18. Editor de collage v2 y buffer de sesión
+
+`CollageWindow` conserva una lista de capturas congeladas compartida por las miniaturas
+WPF y el diccionario de imágenes del documento. Cada reinserción obtiene un nuevo Id de
+objeto con el mismo bitmap; no duplica píxeles. El documento y su historial mantienen la
+geometría en píxeles originales. Vaciar/quitar no liberan el buffer; salir de Zass libera
+visuales, bitmaps y miniaturas. El presupuesto de 64 millones de píxeles se cuenta sobre
+capturas únicas, mientras el límite de composición sigue validándose en Core.
+
+`OverlayWindow.CaptureExported` notifica solo tras una copia o guardado satisfactorios;
+`App` retiene la captura en el editor, sin revelarlo si estaba oculto. Añadir al collage
+continúa colocando y revelando el recorte. Un buffer lleno se notifica sin deshacer una
+exportación directa exitosa. La exportación del collage ya no cierra la ventana.
+
+El layout usa cinco zonas: herramientas, acciones generales, propiedades contextuales,
+lienzo y tira inferior. Flechas conserva los estilos existentes en el panel contextual.
+El zoom sigue siendo un `LayoutTransform`; no interviene en `CollageComposer`.
+No se añaden dependencias. La construcción sin mostrar ventanas y las mediciones de
+layout son verificables automáticamente; interacción, DPI y nitidez requieren a Toni.
