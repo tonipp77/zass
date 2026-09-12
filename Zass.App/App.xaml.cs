@@ -28,6 +28,8 @@ public partial class App : Application
     private HotkeyManager? _hotkey;
     private OverlayWindow? _overlay;
     private SettingsWindow? _settingsWindow;
+    private CollageWindow? _collageWindow;
+    private bool _captureStarting;
     private AppSettings _settings = new();
 
     protected override void OnStartup(StartupEventArgs e)
@@ -81,6 +83,7 @@ public partial class App : Application
 
         var menu = new ContextMenu();
         menu.Items.Add(MenuItem(Strings.TrayCapture, (_, _) => BeginCapture()));
+        menu.Items.Add(MenuItem(Strings.CollageTitle, (_, _) => ShowCollage()));
         menu.Items.Add(new Separator());
         menu.Items.Add(MenuItem(Strings.TraySettings, (_, _) => ShowSettings()));
         menu.Items.Add(MenuItem(Strings.TrayAbout, (_, _) => ShowAbout()));
@@ -100,15 +103,23 @@ public partial class App : Application
     /// Captures the active monitor and opens the overlay. Re-entrant calls (a
     /// second hotkey press while the overlay is open) are ignored.
     /// </summary>
-    private void BeginCapture()
+    private async void BeginCapture()
     {
-        if (_overlay != null)
+        if (_overlay != null || _captureStarting || _collageWindow?.IsExporting == true)
         {
             return;
         }
 
+        if (_collageWindow is not null && !_collageWindow.PrepareForCapture()) return;
+
+        _captureStarting = true;
+        bool revealCollage = _collageWindow?.IsVisible == true;
         try
         {
+            if (revealCollage)
+            {
+                await _collageWindow!.HideForCaptureAsync();
+            }
             CapturedImage capture = _captureService.CaptureActiveMonitor();
             var options = new OverlayOptions(
                 _settings.LastColor,
@@ -118,10 +129,17 @@ public partial class App : Application
                 _settings.JpegQuality);
 
             var overlay = new OverlayWindow(capture, options);
+            overlay.CaptureExported += image => EnsureCollage().RetainCapture(image);
+            overlay.AddToCollageRequested += image =>
+            {
+                EnsureCollage().AddCrop(image);
+                revealCollage = true;
+            };
             overlay.Closed += (_, _) =>
             {
                 RememberAnnotationStyle(overlay);
                 _overlay = null;
+                if (revealCollage) _collageWindow?.Reveal();
             };
             _overlay = overlay;
             overlay.Show();
@@ -132,7 +150,24 @@ public partial class App : Application
             Trace.TraceError($"Zass: capture failed: {ex}");
             MessageBox.Show(Strings.CaptureErrorMessage, Strings.HotkeyConflictTitle,
                 MessageBoxButton.OK, MessageBoxImage.Error);
+            if (revealCollage) _collageWindow?.Reveal();
         }
+        finally { _captureStarting = false; }
+    }
+
+    private CollageWindow EnsureCollage()
+    {
+        if (_collageWindow is not null) return _collageWindow;
+        var window = new CollageWindow(() => (_settings.DefaultFormat, _settings.JpegQuality));
+        window.CaptureRequested += BeginCapture;
+        window.Closed += (_, _) => _collageWindow = null;
+        _collageWindow = window;
+        return window;
+    }
+
+    private void ShowCollage()
+    {
+        if (_overlay is null && !_captureStarting) EnsureCollage().Reveal();
     }
 
     /// <summary>
@@ -178,6 +213,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        _collageWindow?.CloseForShutdown();
         _hotkey?.Dispose();
         _trayIcon?.Dispose();
         base.OnExit(e);

@@ -309,3 +309,128 @@ Separar `Zass.Core` sin dependencia de WPF facilita las pruebas del modelo de an
 - Gestionar con cuidado el foco de teclado durante la edición de texto para no romper los atajos ni la escritura.
 - Liberar todos los recursos gráficos al cerrar el overlay; verificar ausencia de fugas en ciclos repetidos.
 - Donde el PRD deja una decisión abierta (comportamiento de las anotaciones al redimensionar la selección, sección 9 del PRD), implementar la opción propuesta (posición absoluta, recorte si quedan fuera) salvo indicación contraria.
+
+## 16. Ampliación feature-1: línea y collage
+
+- `LineAnnotation` sigue el modelo vectorial de la flecha y se materializa como `Line`
+  en `AnnotationCanvasController`. Comparte el flujo de borrador y `AddAnnotationCommand`.
+- `Zass.Core.Collage.CollageDocument` almacena identificadores y rectángulos en píxeles
+  físicos, sin WPF. Usa el historial Command existente con estados inmutables para añadir,
+  mover, quitar y vaciar. Valida dimensiones y superficie antes de modificar el documento.
+- `CollageWindow` conserva los bitmaps por identificador, incluidos los necesarios para
+  deshacer. Los libera al finalizar la sesión. Cerrar la ventana normalmente la oculta;
+  una exportación correcta termina la sesión. No se añaden dependencias.
+- El lienzo presenta una unidad por píxel de imagen antes de aplicar el zoom mediante
+  `LayoutTransform`; las coordenadas del ratón se leen respecto al lienzo transformado y
+  se redondean a píxeles enteros. El zoom no modifica el modelo ni la resolución exportada.
+- `CollageComposer` crea un visual separado con fondo blanco y bitmaps a tamaño original,
+  ajustado a la unión de recortes y renderizado a 96 DPI. No utiliza el lienzo del editor,
+  por lo que nunca incluye sus marcos o su espacio auxiliar. Dibuja primero capturas y después anotaciones, con orden estable dentro de cada grupo.
+- `App` es propietario de la ventana de collage. Oculta la ventana antes de capturar,
+  desactiva las transiciones DWM del collage, oculta la ventana y espera a la composición
+  pendiente antes de capturar. Bloquea capturas reentrantes durante ese paso.
+  El overlay entrega el resultado de `ComposeForExport()` al collage; copiar y guardar
+  directamente mantienen el flujo existente. La ventana se puede recuperar desde la bandeja.
+- La copia del collage reintenta de forma asíncrona cuando el portapapeles está ocupado.
+  Los errores se registran y se notifican, conservando la sesión para volver a intentarlo.
+
+### Anotaciones de collage y efecto de pixelado
+
+- `CollageItem` admite una decoración inmutable con tipo, geometría local, color,
+  tamaño y texto. Usa el mismo historial de estados que los recortes; mover cambia el
+  rectángulo del objeto manteniendo la geometría local. Los límites de exportación
+  incluyen todos los objetos. `CollageDecorationRenderer` produce el mismo `Drawing`
+  tanto para la imagen vectorial de previsualización como para `CollageComposer`.
+- Las flechas curva, recta y acodada se construyen como geometrías WPF. El texto utiliza
+  `FormattedText` con Segoe UI. Los objetos siguen siendo independientes hasta exportar;
+  la composición nunca incorpora el editor de texto ni el marco de selección.
+- El collage confirma los borradores antes de ocultarse, iniciar una captura o exportar.
+  El editor de texto conserva el control de las teclas mientras está activo. Una vez
+  confirmado, texto y flechas participan en el historial cronológico del documento.
+- `PixelationAnnotation` conserva el rectángulo y el tamaño de bloque en píxeles físicos.
+  `PixelationEffect` es el algoritmo puro de promediado BGRA, probado con bloques parciales
+  y stride con padding. No añade dependencias WPF a Core.
+- Al comenzar un pixelado se compone una instantánea del fondo y las anotaciones ya
+  confirmadas, excluyendo el oscurecimiento y todos los controles. `PixelationRenderer`
+  recorta esa instantánea y genera el efecto durante el arrastre. El controlador conserva
+  solo el bitmap resultante de cada rectángulo para reproducirlo idénticamente al rehacer;
+  libera la instantánea completa al confirmar y los efectos del historial redo descartado
+  al crear un nuevo comando. El bitmap no modifica el fondo original del overlay.
+- Los atajos de teclado confirman un trazo activo una sola vez antes de ejecutar acciones,
+  evitando incluir borradores sin confirmar al exportar o duplicar operaciones de historial.
+
+
+## 17. Primer incremento v2: estilos y sombras en captura
+
+`ArrowStyle` y `Annotation.HasShadow` conservan el estilo en el modelo sin WPF.
+El controlador captura estas preferencias al iniciar cada objeto, incluido el editor
+inline de texto. Undo/redo reutiliza el objeto con sus preferencias originales.
+
+Las flechas cerradas se dibujan como polígonos rellenos; la abierta utiliza extremos
+planos y uniones angulares. La cabeza mínima también se convierte de píxeles físicos
+a DIP. `DropShadowEffect` se aplica por objeto (negro, opacidad 0,45, desenfoque 4 px,
+desplazamiento 3 px hacia abajo/derecha). No se aplica a `PixelationAnnotation`.
+La exportación sigue renderizando el mismo canvas de anotaciones, sin controles.
+No se añaden dependencias ni se cambian TFM, captura o persistencia.
+
+
+## 18. Editor de collage v2 y buffer de sesión
+
+`CollageWindow` conserva una lista de capturas congeladas compartida por las miniaturas
+WPF y el diccionario de imágenes del documento. Cada reinserción obtiene un nuevo Id de
+objeto con el mismo bitmap; no duplica píxeles. El documento y su historial mantienen la
+geometría en píxeles originales. Vaciar/quitar no liberan el buffer; salir de Zass libera
+visuales, bitmaps y miniaturas. El presupuesto de 64 millones de píxeles se cuenta sobre
+capturas únicas, mientras el límite de composición sigue validándose en Core.
+
+`OverlayWindow.CaptureExported` notifica solo tras una copia o guardado satisfactorios;
+`App` retiene la captura en el editor, sin revelarlo si estaba oculto. Añadir al collage
+continúa colocando y revelando el recorte. Un buffer lleno se notifica sin deshacer una
+exportación directa exitosa. La exportación del collage ya no cierra la ventana.
+
+El layout usa cinco zonas: herramientas, acciones generales, propiedades contextuales,
+lienzo y tira inferior. Flechas conserva los estilos existentes en el panel contextual.
+El zoom sigue siendo un `LayoutTransform`; no interviene en `CollageComposer`.
+No se añaden dependencias. La construcción sin mostrar ventanas y las mediciones de
+layout son verificables automáticamente; interacción, DPI y nitidez requieren a Toni.
+
+
+## 19. Sellos, pasos, rótulos y estilos de collage
+
+`CollageDecoration` incorpora propiedades inmutables para sello, formas de paso/rótulo,
+tipo de punta, discontinuidad, fuente, peso, cursiva, contorno, opacidad y sombra.
+Se capturan al colocar el objeto; el editor de texto retiene la definición hasta confirmar.
+Todos los objetos reutilizan el historial de `CollageDocument`, sin dependencias WPF en Core.
+
+`CollageDecorationRenderer` produce geometrías de símbolos, marcos y glifos. La sombra
+es una silueta vectorial negra desplazada 3 px con opacidad 0,32, sin rasterizar ni aplicar
+un efecto exclusivo de la UI. Opacidad se aplica al conjunto. `CreateItem` calcula los
+límites incluyendo sombra y contorno, y `Draw` se comparte por imagen de previsualización
+y exportador. El zoom no cambia geometría ni sombras. El pixelado del overlay no cambia.
+
+`tests/CollageChecks` es una comprobación WPF ejecutable, sin paquetes nuevos, fuera de
+la solución principal para mantener `Zass.Tests` centrado en Core. Cubre 88 combinaciones,
+igualdad de píxeles entre previsualización/exportación, movimiento e historial, espacio de
+sombra, editor inline, buffer y layout. No abre ventanas ni verifica la pantalla de Toni.
+
+
+Corrección del texto con contorno: `DrawingGroup` dibuja primero el trazo blanco y
+luego los glifos rellenos sin trazo. El relleno no pierde superficie con fuentes finas.
+La selección automática reutiliza `SetTool(null)` después de confirmar; no crea comandos
+adicionales. El movimiento por teclado usa `CollageDocument.Move`. Zoom y ajuste al área
+visible usan exclusivamente `LayoutTransform` y desplazamientos de `ScrollViewer`.
+
+
+`CollageDocument.ItemsInPaintOrder` define una partición estable: capturas primero,
+decoraciones después. Editor y compositor consumen esa propiedad. `Items` conserva
+el orden cronológico original, sin reordenar estados del historial ni añadir comandos.
+
+
+Corrección de captura desde collage: la espera fija de 150 ms se sustituye por
+`HideForCaptureAsync`. Desactiva transiciones DWM solo en esta ventana, cierra el popup
+de color, oculta, cede al Dispatcher y espera `DwmFlush` fuera del hilo de UI. La interop
+está aislada en `WindowComposition`; errores HRESULT se propagan al aviso de captura
+existente y recuperan el collage. No modifica la configuración de animaciones del sistema.
+DwmFlush sincroniza actualizaciones pendientes de esta aplicación, no todo el escritorio.
+La corrección de rastros ha sido validada por Toni.
+Compilación final: `dist/v2-capture-clean`. Entrega aprobada para integración.
