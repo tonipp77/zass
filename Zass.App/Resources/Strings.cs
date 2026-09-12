@@ -34,6 +34,35 @@ internal static class Strings
     public static string CollageExportComplete => Get(nameof(CollageExportComplete));
     public static string CollageBufferFull => Get(nameof(CollageBufferFull));
 
+    public static string CollageStamps => Get(nameof(CollageStamps));
+    public static string CollageSteps => Get(nameof(CollageSteps));
+    public static string CollageLabels => Get(nameof(CollageLabels));
+    public static string CollageBold => Get(nameof(CollageBold));
+    public static string CollageItalic => Get(nameof(CollageItalic));
+    public static string CollageTextOutline => Get(nameof(CollageTextOutline));
+    public static string CollageDashed => Get(nameof(CollageDashed));
+    public static string CollageOpacity => Get(nameof(CollageOpacity));
+    public static string CollageFont => Get(nameof(CollageFont));
+    public static string CollageObjectSize => Get(nameof(CollageObjectSize));
+    public static string StampCheck => Get(nameof(StampCheck));
+    public static string StampCross => Get(nameof(StampCross));
+    public static string StampProhibited => Get(nameof(StampProhibited));
+    public static string StampPlus => Get(nameof(StampPlus));
+    public static string StampMinus => Get(nameof(StampMinus));
+    public static string StampExclamation => Get(nameof(StampExclamation));
+    public static string StampQuestion => Get(nameof(StampQuestion));
+    public static string StepCircle => Get(nameof(StepCircle));
+    public static string StepTeardrop => Get(nameof(StepTeardrop));
+    public static string LabelBox => Get(nameof(LabelBox));
+    public static string LabelSpeech => Get(nameof(LabelSpeech));
+    public static string ArrowDouble => Get(nameof(ArrowDouble));
+
+    public static string CollageZoomIn => Get(nameof(CollageZoomIn));
+    public static string CollageZoomOut => Get(nameof(CollageZoomOut));
+    public static string CollageZoomActual => Get(nameof(CollageZoomActual));
+    public static string CollageZoomFit => Get(nameof(CollageZoomFit));
+    public static string CollageZoomHelp => Get(nameof(CollageZoomHelp));
+
     public static string ToolCollage => Get(nameof(ToolCollage));
     public static string CollageTitle => Get(nameof(CollageTitle));
     public static string CollageHint => Get(nameof(CollageHint));

@@ -325,9 +325,10 @@ Separar `Zass.Core` sin dependencia de WPF facilita las pruebas del modelo de an
   se redondean a píxeles enteros. El zoom no modifica el modelo ni la resolución exportada.
 - `CollageComposer` crea un visual separado con fondo blanco y bitmaps a tamaño original,
   ajustado a la unión de recortes y renderizado a 96 DPI. No utiliza el lienzo del editor,
-  por lo que nunca incluye sus marcos o su espacio auxiliar. Mantiene el orden de inserción.
+  por lo que nunca incluye sus marcos o su espacio auxiliar. Dibuja primero capturas y después anotaciones, con orden estable dentro de cada grupo.
 - `App` es propietario de la ventana de collage. Oculta la ventana antes de capturar,
-  cede 150 ms para repintar el escritorio y bloquea capturas reentrantes durante ese paso.
+  desactiva las transiciones DWM del collage, oculta la ventana y espera a la composición
+  pendiente antes de capturar. Bloquea capturas reentrantes durante ese paso.
   El overlay entrega el resultado de `ComposeForExport()` al collage; copiar y guardar
   directamente mantienen el flujo existente. La ventana se puede recuperar desde la bandeja.
 - La copia del collage reintenta de forma asíncrona cuando el portapapeles está ocupado.
@@ -392,3 +393,44 @@ lienzo y tira inferior. Flechas conserva los estilos existentes en el panel cont
 El zoom sigue siendo un `LayoutTransform`; no interviene en `CollageComposer`.
 No se añaden dependencias. La construcción sin mostrar ventanas y las mediciones de
 layout son verificables automáticamente; interacción, DPI y nitidez requieren a Toni.
+
+
+## 19. Sellos, pasos, rótulos y estilos de collage
+
+`CollageDecoration` incorpora propiedades inmutables para sello, formas de paso/rótulo,
+tipo de punta, discontinuidad, fuente, peso, cursiva, contorno, opacidad y sombra.
+Se capturan al colocar el objeto; el editor de texto retiene la definición hasta confirmar.
+Todos los objetos reutilizan el historial de `CollageDocument`, sin dependencias WPF en Core.
+
+`CollageDecorationRenderer` produce geometrías de símbolos, marcos y glifos. La sombra
+es una silueta vectorial negra desplazada 3 px con opacidad 0,32, sin rasterizar ni aplicar
+un efecto exclusivo de la UI. Opacidad se aplica al conjunto. `CreateItem` calcula los
+límites incluyendo sombra y contorno, y `Draw` se comparte por imagen de previsualización
+y exportador. El zoom no cambia geometría ni sombras. El pixelado del overlay no cambia.
+
+`tests/CollageChecks` es una comprobación WPF ejecutable, sin paquetes nuevos, fuera de
+la solución principal para mantener `Zass.Tests` centrado en Core. Cubre 88 combinaciones,
+igualdad de píxeles entre previsualización/exportación, movimiento e historial, espacio de
+sombra, editor inline, buffer y layout. No abre ventanas ni verifica la pantalla de Toni.
+
+
+Corrección del texto con contorno: `DrawingGroup` dibuja primero el trazo blanco y
+luego los glifos rellenos sin trazo. El relleno no pierde superficie con fuentes finas.
+La selección automática reutiliza `SetTool(null)` después de confirmar; no crea comandos
+adicionales. El movimiento por teclado usa `CollageDocument.Move`. Zoom y ajuste al área
+visible usan exclusivamente `LayoutTransform` y desplazamientos de `ScrollViewer`.
+
+
+`CollageDocument.ItemsInPaintOrder` define una partición estable: capturas primero,
+decoraciones después. Editor y compositor consumen esa propiedad. `Items` conserva
+el orden cronológico original, sin reordenar estados del historial ni añadir comandos.
+
+
+Corrección de captura desde collage: la espera fija de 150 ms se sustituye por
+`HideForCaptureAsync`. Desactiva transiciones DWM solo en esta ventana, cierra el popup
+de color, oculta, cede al Dispatcher y espera `DwmFlush` fuera del hilo de UI. La interop
+está aislada en `WindowComposition`; errores HRESULT se propagan al aviso de captura
+existente y recuperan el collage. No modifica la configuración de animaciones del sistema.
+DwmFlush sincroniza actualizaciones pendientes de esta aplicación, no todo el escritorio.
+La corrección de rastros ha sido validada por Toni.
+Compilación final: `dist/v2-capture-clean`. Entrega aprobada para integración.

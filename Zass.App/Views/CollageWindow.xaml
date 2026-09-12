@@ -49,6 +49,9 @@
                     <ToggleButton x:Name="PointerTool" Click="OnPointerTool" IsChecked="True" />
                     <ToggleButton x:Name="ArrowTool" Click="OnArrowTool" />
                     <ToggleButton x:Name="TextTool" Click="OnTextTool" />
+                    <ToggleButton x:Name="StampTool" Click="OnStampTool" />
+                    <ToggleButton x:Name="StepTool" Click="OnStepTool" />
+                    <ToggleButton x:Name="LabelTool" Click="OnLabelTool" />
                 </WrapPanel>
             </DockPanel>
         </Border>
@@ -76,11 +79,18 @@
                 </ScrollViewer>
             </Border>
             <Grid Grid.Column="1" Margin="16">
-                <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
                 <TextBlock x:Name="Hint" TextWrapping="Wrap" Foreground="#637185" Margin="0,0,0,12" FontSize="12" />
-                <Border Grid.Row="1" BorderBrush="#CAD3DF" BorderThickness="1">
+                <WrapPanel Grid.Row="1" Margin="0,0,0,8">
+                    <Button x:Name="ZoomOutButton" Click="OnZoomOut" Margin="0,0,6,4" />
+                    <Button x:Name="ZoomInButton" Click="OnZoomIn" Margin="0,0,6,4" />
+                    <Button x:Name="ZoomActualButton" Click="OnZoomActual" Margin="0,0,6,4" />
+                    <Button x:Name="ZoomFitButton" Click="OnZoomFit" Margin="0,0,6,4" />
+                    <TextBlock x:Name="ZoomHelp" VerticalAlignment="Center" FontSize="11" Foreground="#637185" />
+                </WrapPanel>
+                <Border Grid.Row="2" BorderBrush="#CAD3DF" BorderThickness="1">
                     <ScrollViewer x:Name="Viewport" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
-                                  Background="#E1E6ED" Focusable="False">
+                                  Background="#E1E6ED" Focusable="False" PreviewMouseWheel="OnViewportWheel">
                         <Canvas x:Name="Surface" Background="White" HorizontalAlignment="Left" VerticalAlignment="Top"
                                 MouseLeftButtonDown="OnSurfaceDown" MouseMove="OnSurfaceMove"
                                 MouseLeftButtonUp="OnSurfaceUp" LostMouseCapture="OnSurfaceLostCapture">
@@ -100,14 +110,33 @@
                                 <ToggleButton x:Name="StraightTool" Click="OnStraightTool" Margin="0,0,0,6" />
                                 <ToggleButton x:Name="ElbowTool" Click="OnElbowTool" Margin="0,0,0,6" />
                             </StackPanel>
+                            <ComboBox x:Name="StampChoice" Margin="0,0,0,12" Visibility="Collapsed" />
+                            <ComboBox x:Name="StepChoice" Margin="0,0,0,12" Visibility="Collapsed" />
+                            <ComboBox x:Name="LabelChoice" Margin="0,0,0,12" Visibility="Collapsed" />
+                            <StackPanel x:Name="ArrowOptions" Visibility="Collapsed" Margin="0,0,0,12">
+                                <ComboBox x:Name="TipChoice" />
+                                <CheckBox x:Name="DashedCheck" Margin="0,8,0,0" />
+                            </StackPanel>
+                            <StackPanel x:Name="TextOptions" Visibility="Collapsed" Margin="0,0,0,12">
+                                <ComboBox x:Name="FontChoice" />
+                                <CheckBox x:Name="BoldCheck" Margin="0,8,0,0" />
+                                <CheckBox x:Name="ItalicCheck" Margin="0,8,0,0" />
+                                <CheckBox x:Name="OutlineCheck" Margin="0,8,0,0" />
+                            </StackPanel>
                             <Button x:Name="ColorButton" Click="OnColorClick" HorizontalAlignment="Left">
                                 <Border x:Name="ColorSwatch" Width="40" Height="20" Background="Red" />
                             </Button>
                             <TextBlock x:Name="SizeLabel" Margin="0,8,0,6" />
                             <DockPanel>
                                 <TextBlock DockPanel.Dock="Right" Text="{Binding ElementName=SizeSlider, Path=Value, StringFormat=F0}" Width="32" TextAlignment="Right" />
-                                <Slider x:Name="SizeSlider" Minimum="8" Maximum="48" Value="16"
+                                <Slider x:Name="SizeSlider" Minimum="8" Maximum="96" Value="24"
                                         TickFrequency="1" IsSnapToTickEnabled="True" Focusable="False" />
+                            </DockPanel>
+                            <CheckBox x:Name="ShadowCheck" Margin="0,16,0,8" />
+                            <TextBlock x:Name="OpacityLabel" Margin="0,0,0,6" />
+                            <DockPanel>
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding ElementName=OpacitySlider, Path=Value, StringFormat={}{0}%}" Width="38" TextAlignment="Right" />
+                                <Slider x:Name="OpacitySlider" Minimum="10" Maximum="100" Value="100" TickFrequency="5" IsSnapToTickEnabled="True" Focusable="False" />
                             </DockPanel>
                             <Popup x:Name="ColorPopup" PlacementTarget="{Binding ElementName=ColorButton}"
                                    Placement="Left" StaysOpen="False" AllowsTransparency="True" Closed="OnColorPopupClosed">

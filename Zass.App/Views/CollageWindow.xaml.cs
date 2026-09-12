@@ -14,6 +14,7 @@ using Zass.App.Resources;
 using Zass.Core.Collage;
 using Zass.Core.Annotations;
 using Zass.Core.Export;
+using Zass.Interop;
 
 namespace Zass.App.Views;
 
@@ -39,10 +40,9 @@ public partial class CollageWindow : Window
     private CollageItem? _arrowDraft;
     private Image? _draftVisual;
     private TextBox? _textEditor;
-    private PhysicalPoint _textPosition;
-    private ArgbColor _textColor;
     private double _textSize;
     private bool _suppressColorReopen;
+    private CollageDecoration? _textDefinition;
 
     public CollageWindow(Func<(ImageExportFormat Format, int Quality)> exportOptions)
     {
@@ -56,6 +56,8 @@ public partial class CollageWindow : Window
             ColorSwatch.Background = new SolidColorBrush(c);
         };
         ColorPickerControl.ColorCommitted += (_, _) => ColorPopup.IsOpen = false;
+        FontChoice.ItemsSource = new[] { "Segoe UI", "Arial", "Calibri", "Consolas", "Georgia" };
+        FontChoice.SelectedIndex = 0;
         RefreshLanguage();
         LocalizationManager.LanguageChanged += OnLanguageChanged;
         Closing += OnClosing;
@@ -106,6 +108,7 @@ public partial class CollageWindow : Window
         _images.Add(id, image);
         _selected = id;
         Refresh();
+        SetTool(null);
     }
 
     private void RefreshCaptureStrip()
@@ -136,6 +139,17 @@ public partial class CollageWindow : Window
             };
             CaptureStrip.Children.Add(button);
         }
+    }
+
+    public async Task HideForCaptureAsync()
+    {
+        // Hide without the DWM fade, otherwise BitBlt can capture a translucent remnant.
+        WindowComposition.DisableTransitions(new System.Windows.Interop.WindowInteropHelper(this).EnsureHandle());
+        ColorPopup.IsOpen = false;
+        Hide();
+        await Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.ContextIdle);
+        // Keep the UI responsive while waiting for the compositor's next presentation.
+        await Task.Run(WindowComposition.Flush);
     }
 
     public void Reveal()
@@ -173,6 +187,25 @@ public partial class CollageWindow : Window
     private void OnStraightTool(object sender, RoutedEventArgs e) => SetTool(CollageDecorationKind.StraightArrow);
     private void OnElbowTool(object sender, RoutedEventArgs e) => SetTool(CollageDecorationKind.ElbowArrow);
     private void OnTextTool(object sender, RoutedEventArgs e) => SetTool(CollageDecorationKind.Text);
+    private void OnStampTool(object sender, RoutedEventArgs e) => SetTool(CollageDecorationKind.Stamp);
+    private void OnStepTool(object sender, RoutedEventArgs e) => SetTool(CollageDecorationKind.Step);
+    private void OnLabelTool(object sender, RoutedEventArgs e) => SetTool(CollageDecorationKind.Label);
+
+    private static bool IsTextTool(CollageDecorationKind? tool) =>
+        tool is CollageDecorationKind.Text or CollageDecorationKind.Step or CollageDecorationKind.Label;
+    private static bool IsArrowTool(CollageDecorationKind? tool) =>
+        tool is CollageDecorationKind.CurvedArrow or CollageDecorationKind.StraightArrow or CollageDecorationKind.ElbowArrow;
+
+    private CollageDecoration Definition(PhysicalPoint from, PhysicalPoint to) => new(
+        _tool!.Value, from, to, _color, SizeSlider.Value,
+        HasShadow: ShadowCheck.IsChecked == true, Opacity: OpacitySlider.Value / 100,
+        FontFamily: FontChoice.SelectedItem as string ?? "Segoe UI",
+        Bold: BoldCheck.IsChecked == true, Italic: ItalicCheck.IsChecked == true,
+        TextOutline: OutlineCheck.IsChecked == true,
+        Stamp: (CollageStamp)Math.Max(0, StampChoice.SelectedIndex),
+        BadgeShape: (CollageBadgeShape)Math.Max(0, StepChoice.SelectedIndex),
+        LabelShape: (CollageLabelShape)Math.Max(0, LabelChoice.SelectedIndex),
+        ArrowTip: (CollageArrowTip)Math.Max(0, TipChoice.SelectedIndex), Dashed: DashedCheck.IsChecked == true);
 
     private void SetTool(CollageDecorationKind? tool)
     {
@@ -183,15 +216,24 @@ public partial class CollageWindow : Window
         StraightTool.IsChecked = tool == CollageDecorationKind.StraightArrow;
         ElbowTool.IsChecked = tool == CollageDecorationKind.ElbowArrow;
         TextTool.IsChecked = tool == CollageDecorationKind.Text;
-        bool isArrow = tool is not null && tool != CollageDecorationKind.Text;
+        StampTool.IsChecked = tool == CollageDecorationKind.Stamp;
+        StepTool.IsChecked = tool == CollageDecorationKind.Step;
+        LabelTool.IsChecked = tool == CollageDecorationKind.Label;
+        StampChoice.Visibility = tool == CollageDecorationKind.Stamp ? Visibility.Visible : Visibility.Collapsed;
+        StepChoice.Visibility = tool == CollageDecorationKind.Step ? Visibility.Visible : Visibility.Collapsed;
+        LabelChoice.Visibility = tool == CollageDecorationKind.Label ? Visibility.Visible : Visibility.Collapsed;
+        TextOptions.Visibility = IsTextTool(tool) ? Visibility.Visible : Visibility.Collapsed;
+        OutlineCheck.Visibility = tool == CollageDecorationKind.Text ? Visibility.Visible : Visibility.Collapsed;
+        bool isArrow = IsArrowTool(tool);
+        ArrowOptions.Visibility = isArrow ? Visibility.Visible : Visibility.Collapsed;
         if (isArrow) _lastArrowTool = tool!.Value;
         ArrowTool.IsChecked = isArrow;
         ArrowStyles.Visibility = isArrow ? Visibility.Visible : Visibility.Collapsed;
         ToolProperties.Visibility = tool is null ? Visibility.Collapsed : Visibility.Visible;
         PointerHint.Visibility = tool is null ? Visibility.Visible : Visibility.Collapsed;
         if (tool is null) ColorPopup.IsOpen = false;
-        SizeLabel.Text = tool == CollageDecorationKind.Text ? Strings.LabelTextSize : Strings.LabelThickness;
-        Surface.Cursor = tool is null ? Cursors.Arrow : tool == CollageDecorationKind.Text ? Cursors.IBeam : Cursors.Cross;
+        SizeLabel.Text = IsTextTool(tool) ? Strings.LabelTextSize : Strings.CollageObjectSize;
+        Surface.Cursor = tool is null ? Cursors.Arrow : IsTextTool(tool) ? Cursors.IBeam : Cursors.Cross;
         foreach (Image image in _visuals.Values) image.Cursor = tool is null ? Cursors.SizeAll : Surface.Cursor;
     }
 
@@ -217,8 +259,7 @@ public partial class CollageWindow : Window
             _draftVisual = null;
             return;
         }
-        _arrowDraft = CollageDecorationRenderer.CreateItem(new CollageDecoration(
-            _tool.Value, start, end, _color, SizeSlider.Value));
+        _arrowDraft = CollageDecorationRenderer.CreateItem(Definition(start, end));
         if (_draftVisual is null)
         {
             _draftVisual = new Image { IsHitTestVisible = false, Stretch = Stretch.Fill };
@@ -233,13 +274,15 @@ public partial class CollageWindow : Window
 
     private void BeginText(PhysicalPoint point)
     {
-        _textPosition = point;
-        _textColor = _color;
+        _textDefinition = Definition(point, point);
         _textSize = SizeSlider.Value;
         var brush = new SolidColorBrush(Color.FromArgb(_color.A, _color.R, _color.G, _color.B));
         var editor = new TextBox
         {
-            MinWidth = 40, FontFamily = new FontFamily("Segoe UI"), FontSize = _textSize,
+            MinWidth = 40, FontFamily = new FontFamily(_textDefinition.FontFamily), FontSize = _textSize,
+            FontWeight = _textDefinition.Bold ? FontWeights.Bold : FontWeights.Normal,
+            FontStyle = _textDefinition.Italic ? FontStyles.Italic : FontStyles.Normal,
+            MaxLength = _tool == CollageDecorationKind.Step ? 4 : 1000,
             Foreground = brush, CaretBrush = brush, Background = Brushes.White,
             Padding = new Thickness(0), BorderThickness = new Thickness(0),
             AcceptsReturn = false, AcceptsTab = false,
@@ -264,22 +307,49 @@ public partial class CollageWindow : Window
         if (_textEditor is not TextBox editor) return true;
         if (!string.IsNullOrWhiteSpace(editor.Text))
         {
-            var item = CollageDecorationRenderer.CreateItem(new CollageDecoration(CollageDecorationKind.Text,
-                _textPosition, _textPosition, _textColor, _textSize, editor.Text));
+            var item = CollageDecorationRenderer.CreateItem(_textDefinition! with { Text = editor.Text });
             try { _selected = _document.AddDecoration(item.Decoration!, item.Bounds); }
             catch (ArgumentOutOfRangeException ex) { ReportError(ex, Strings.CollageAnnotationError); return false; }
         }
         _textEditor = null;
         Surface.Children.Remove(editor);
         Refresh();
+        SetTool(null);
         Keyboard.Focus(this);
         return true;
+    }
+
+    private static void SetChoices(ComboBox control, params string[] choices)
+    {
+        int selected = Math.Max(0, control.SelectedIndex);
+        control.ItemsSource = choices;
+        control.SelectedIndex = selected;
     }
 
     private void RefreshLanguage()
     {
         Title = Heading.Text = Strings.CollageTitle;
         GeneralHeading.Text = Strings.CollageGeneral;
+        ZoomInButton.Content = Strings.CollageZoomIn;
+        ZoomOutButton.Content = Strings.CollageZoomOut;
+        ZoomActualButton.Content = Strings.CollageZoomActual;
+        ZoomFitButton.Content = Strings.CollageZoomFit;
+        ZoomHelp.Text = Strings.CollageZoomHelp;
+        StampTool.Content = Strings.CollageStamps;
+        StepTool.Content = Strings.CollageSteps;
+        LabelTool.Content = Strings.CollageLabels;
+        ShadowCheck.Content = Strings.AnnotationShadow;
+        BoldCheck.Content = Strings.CollageBold;
+        ItalicCheck.Content = Strings.CollageItalic;
+        OutlineCheck.Content = Strings.CollageTextOutline;
+        DashedCheck.Content = Strings.CollageDashed;
+        OpacityLabel.Text = Strings.CollageOpacity;
+        FontChoice.ToolTip = Strings.CollageFont;
+        SetChoices(StampChoice, Strings.StampCheck, Strings.StampCross, Strings.StampProhibited,
+            Strings.StampPlus, Strings.StampMinus, Strings.StampExclamation, Strings.StampQuestion);
+        SetChoices(StepChoice, Strings.StepCircle, Strings.StepTeardrop);
+        SetChoices(LabelChoice, Strings.LabelBox, Strings.LabelSpeech);
+        SetChoices(TipChoice, Strings.ArrowTriangular, Strings.ArrowOpen, Strings.ArrowDouble);
         PropertiesHeading.Text = Strings.CollageProperties;
         PointerHint.Text = Strings.CollagePointerHint;
         BufferHeading.Text = Strings.CollageBuffer;
@@ -303,14 +373,14 @@ public partial class CollageWindow : Window
         ElbowTool.Content = Strings.CollageElbowArrow;
         TextTool.Content = Strings.CollageText;
         ColorButton.ToolTip = Strings.ColorPicker;
-        SizeLabel.Text = _tool == CollageDecorationKind.Text ? Strings.LabelTextSize : Strings.LabelThickness;
+        SizeLabel.Text = IsTextTool(_tool) ? Strings.LabelTextSize : Strings.CollageObjectSize;
     }
 
     private void Refresh()
     {
         Surface.Children.Clear();
         _visuals.Clear();
-        foreach (CollageItem item in _document.Items)
+        foreach (CollageItem item in _document.ItemsInPaintOrder)
         {
             var image = new Image
             {
@@ -375,7 +445,15 @@ public partial class CollageWindow : Window
             _selected = null;
             UpdateSelectionFrame();
             var point = new PhysicalPoint(Math.Round(position.X), Math.Round(position.Y));
-            if (_tool == CollageDecorationKind.Text) BeginText(point);
+            if (IsTextTool(_tool)) BeginText(point);
+            else if (_tool == CollageDecorationKind.Stamp)
+            {
+                var item = CollageDecorationRenderer.CreateItem(Definition(point, point));
+                try { _selected = _document.AddDecoration(item.Decoration!, item.Bounds); }
+                catch (ArgumentOutOfRangeException ex) { ReportError(ex, Strings.CollageAnnotationError); }
+                Refresh();
+                SetTool(null);
+            }
             else
             {
                 _arrowStart = point;
@@ -442,12 +520,50 @@ public partial class CollageWindow : Window
                 catch (ArgumentOutOfRangeException ex) { ReportError(ex, Strings.CollageAnnotationError); }
             }
             Refresh();
+            if (draft is not null) SetTool(null);
         }
         if (_dragItem is null) return;
         var item = _dragItem;
         _dragItem = null;
         _document.Move(item.Id, _pendingX, _pendingY);
         Surface.ReleaseMouseCapture();
+        Refresh();
+    }
+
+    private void OnZoomOut(object sender, RoutedEventArgs e) => ChangeZoom(ZoomSlider.Value / 1.25);
+    private void OnZoomIn(object sender, RoutedEventArgs e) => ChangeZoom(ZoomSlider.Value * 1.25);
+    private void OnZoomActual(object sender, RoutedEventArgs e) => ChangeZoom(1);
+    private void OnZoomFit(object sender, RoutedEventArgs e)
+    {
+        if (!PrepareForCapture() || _document.Items.Count == 0) return;
+        var bounds = _document.Bounds;
+        ChangeZoom(Math.Min(Math.Max(1, Viewport.ViewportWidth - 24) / bounds.Width,
+            Math.Max(1, Viewport.ViewportHeight - 24) / bounds.Height));
+        Viewport.UpdateLayout();
+        Viewport.ScrollToHorizontalOffset(Math.Max(0, bounds.X * ZoomSlider.Value - 12));
+        Viewport.ScrollToVerticalOffset(Math.Max(0, bounds.Y * ZoomSlider.Value - 12));
+    }
+    private void ChangeZoom(double value)
+    {
+        if (_exporting || !PrepareForCapture()) return;
+        ZoomSlider.Value = Math.Clamp(value, ZoomSlider.Minimum, ZoomSlider.Maximum);
+    }
+    private void OnViewportWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (Keyboard.Modifiers != ModifierKeys.Control) return;
+        ChangeZoom(ZoomSlider.Value * (e.Delta > 0 ? 1.25 : 0.8));
+        e.Handled = true;
+    }
+
+    private void NudgeSelected(Key key, int distance)
+    {
+        FinishDrag();
+        if (_selected is not Guid id) return;
+        var item = _document.Items.Single(i => i.Id == id);
+        int x = item.Bounds.X + (key == Key.Left ? -distance : key == Key.Right ? distance : 0);
+        int y = item.Bounds.Y + (key == Key.Up ? -distance : key == Key.Down ? distance : 0);
+        if (!_document.CanMove(id, x, y)) return;
+        _document.Move(id, x, y);
         Refresh();
     }
 
@@ -477,6 +593,14 @@ public partial class CollageWindow : Window
         if (_exporting) return;
         if (_textEditor is not null || Keyboard.FocusedElement is TextBox) return;
         if (ColorPopup.IsOpen && e.Key == Key.Escape) { ColorPopup.IsOpen = false; e.Handled = true; return; }
+        if ((Keyboard.Modifiers == ModifierKeys.None || Keyboard.Modifiers == ModifierKeys.Shift)
+            && e.Key is Key.Left or Key.Right or Key.Up or Key.Down
+            && Keyboard.FocusedElement is not (ComboBox or Slider))
+        {
+            NudgeSelected(e.Key, Keyboard.Modifiers == ModifierKeys.Shift ? 10 : 1);
+            e.Handled = true;
+            return;
+        }
         if (Keyboard.Modifiers == ModifierKeys.Control)
         {
             switch (e.Key)

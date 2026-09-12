@@ -6,6 +6,32 @@ namespace Zass.Tests;
 public class CollageDocumentTests
 {
     [Fact]
+    public void PaintOrder_KeepsCropsBelowDecorationsWithoutChangingChronologicalHistory()
+    {
+        var doc = new CollageDocument();
+        var decoration = new CollageDecoration(CollageDecorationKind.Stamp, new(0, 0), new(0, 0),
+            Zass.Core.Annotations.ArgbColor.Red, 24);
+        Guid firstMark = doc.AddDecoration(decoration, new PhysicalRect(10, 10, 40, 40));
+        Guid firstCrop = doc.Add(100, 100);
+        Guid lastMark = doc.AddDecoration(decoration with { Kind = CollageDecorationKind.Step, Text = "1" },
+            new PhysicalRect(20, 20, 40, 40));
+        Guid lastCrop = doc.Add(80, 80);
+        Guid[] expected = [firstCrop, lastCrop, firstMark, lastMark];
+        Assert.Equal(expected, doc.ItemsInPaintOrder.Select(i => i.Id));
+        Assert.Equal(new[] { firstMark, firstCrop, lastMark, lastCrop }, doc.Items.Select(i => i.Id));
+        doc.Move(lastCrop, 0, 0);
+        Assert.Equal(expected, doc.ItemsInPaintOrder.Select(i => i.Id));
+        doc.Undo();
+        doc.Undo();
+        Assert.DoesNotContain(doc.Items, i => i.Id == lastCrop);
+        doc.Redo();
+        Assert.Equal(expected, doc.ItemsInPaintOrder.Select(i => i.Id));
+        doc.Remove(firstMark);
+        doc.Undo();
+        Assert.Equal(expected, doc.ItemsInPaintOrder.Select(i => i.Id));
+    }
+
+    [Fact]
     public void CropsArrowsTextAndMovement_ShareChronologicalHistory()
     {
         var doc = new CollageDocument();

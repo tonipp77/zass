@@ -17,7 +17,7 @@ internal static class CollageComposer
         using (DrawingContext dc = visual.RenderOpen())
         {
             dc.DrawRectangle(Brushes.White, null, new Rect(0, 0, bounds.Width, bounds.Height));
-            foreach (var item in document.Items)
+            foreach (var item in document.ItemsInPaintOrder)
             {
                 var r = item.Bounds;
                 if (item.Decoration is null)

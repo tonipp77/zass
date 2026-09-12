@@ -311,7 +311,8 @@ la selección de pantalla existente, con sus anotaciones confirmadas.
 - **RF-28 — Historial único:** recortes, flechas, texto, movimientos y borrados comparten
   un único historial cronológico. Ctrl+Z/Ctrl+Y eliminan/restauran objetos completos con
   su estilo y posición. Seleccionar/mover y Quitar objeto funcionan también con flechas
-  y texto. Se exportan todos los objetos en su orden de inserción, incluidos los situados
+  y texto. Las capturas se dibujan debajo de las anotaciones; cada grupo conserva su
+  orden de inserción. Se exportan todos los objetos, incluidos los situados
   fuera de los recortes. Las flechas no se anclan automáticamente al mover las imágenes.
 - **RF-29 — Pixelado en recortes:** herramienta Pixelar (P). Arrastrar define un
   rectángulo cuyo contenido se reemplaza por bloques de color medio, incluidas las
@@ -344,7 +345,7 @@ ni servicios de la aplicación fotografiada. Desarrollo por incrementos en el pl
   en los elementos añadidos. Preservar objetos editables e historial hasta exportar.
 
 RF-30/31 implementados y validados por Toni el 2026-09-12. RF-32 implementado y
-entrega aprobada por Toni para commit y push. RF-33 a RF-36 pendientes.
+entrega aprobada por Toni para commit y push. RF-33 a RF-36 implementados en entrega conjunta, validados por Toni.
 
 ### Sesión de collage v2: decisiones confirmadas por Toni
 
@@ -360,3 +361,49 @@ El buffer mantiene el límite existente de 64 millones de píxeles. Reinsertar n
 el bitmap ni consume ese presupuesto otra vez. Si una captura directa no cabe, la copia
 o guardado sigue siendo válido y se notifica que no pudo conservarse en el buffer.
 El lienzo mantiene su límite independiente de superficie y dimensión de RF-24/25.
+
+
+### Herramientas y estilos de collage: entrega conjunta autorizada
+
+Sellos por clic: check, aspa, prohibido, +, -, ! y ?. Pasos: escribir manualmente hasta
+cuatro caracteres (número o letra) en un círculo o lágrima lateral. Rótulos: texto libre
+hasta 1000 caracteres en caja blanca con borde de color o bocadillo. Texto, pasos y
+rótulos se confirman con Enter/Esc o clic fuera; no hay numeración automática.
+
+Conjunto de estilos confirmado por Toni: Segoe UI, Arial, Calibri, Consolas y Georgia;
+negrita/cursiva, contorno blanco en texto; flechas con punta rellena, abierta o doble
+y trazo continuo/discontinuo en las tres geometrías existentes. Las nuevas anotaciones
+pueden llevar sombra (negra, desplazamiento de 3 píxeles y opacidad 32 %) y opacidad
+común de 10–100 %. Color y tamaño 8–96 se toman al crear el objeto. El contenido se
+conserva como vector y puede moverse, quitarse y deshacerse/rehacerse como objeto entero.
+Los cambios de controles afectan a nuevos objetos; no restilizan los ya confirmados.
+Las sombras se incluyen en el tamaño exportado; ninguna capa de interfaz se exporta.
+
+
+### Correcciones de uso del collage tras validación visual
+
+El contorno blanco se dibuja detrás del relleno de texto; el color interior debe verse
+con peso normal y negrita. Crear cualquier objeto o insertar una captura activa Seleccionar/
+mover y conserva el nuevo objeto seleccionado. Arrastrar mueve el objeto completo;
+flechas desplazan 1 px y Mayús+flechas 10 px, con deshacer/rehacer. Los atajos no afectan
+la escritura ni los controles de selección. Las anotaciones ya aplanadas dentro de una
+captura no son objetos independientes en el collage.
+
+El zoom mantiene 10–200 %, con slider y acciones Acercar, Alejar, 100 %, Ajustar al
+área visible y Ctrl+rueda sobre el lienzo. Solo cambia la vista, no modelo ni exportación.
+
+
+Orden de capas confirmado por Toni: las imágenes de captura siempre quedan debajo de
+las anotaciones del collage, incluso si se añaden después. Dentro de cada grupo se
+conserva el orden de inserción. Mover objetos, deshacer o rehacer no cambia esta regla.
+Vista y exportación comparten el orden; el historial sigue siendo cronológico.
+
+
+Corrección de captura desde collage: la espera fija de 150 ms se sustituye por
+`HideForCaptureAsync`. Desactiva transiciones DWM solo en esta ventana, cierra el popup
+de color, oculta, cede al Dispatcher y espera `DwmFlush` fuera del hilo de UI. La interop
+está aislada en `WindowComposition`; errores HRESULT se propagan al aviso de captura
+existente y recuperan el collage. No modifica la configuración de animaciones del sistema.
+DwmFlush sincroniza actualizaciones pendientes de esta aplicación, no todo el escritorio.
+La corrección de rastros ha sido validada por Toni.
+Compilación final: `dist/v2-capture-clean`. Entrega aprobada para integración.

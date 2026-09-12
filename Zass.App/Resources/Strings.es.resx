@@ -233,7 +233,7 @@
   <data name="ArrowStyleLabel" xml:space="preserve"><value>Estilo de flecha</value></data>
   <data name="CollageGeneral" xml:space="preserve"><value>Lienzo</value></data>
   <data name="CollageProperties" xml:space="preserve"><value>Propiedades de herramienta</value></data>
-  <data name="CollagePointerHint" xml:space="preserve"><value>Haz clic en un objeto para seleccionarlo. Arrástralo para moverlo o quítalo con los controles de la izquierda.</value></data>
+  <data name="CollagePointerHint" xml:space="preserve"><value>Los objetos nuevos quedan seleccionados para mover. Arrástralos o usa las flechas (Mayús: 10 px). Las marcas integradas en una captura se mueven con esa imagen.</value></data>
   <data name="CollageBuffer" xml:space="preserve"><value>Capturas de la sesión</value></data>
   <data name="CollageBufferHint" xml:space="preserve"><value>Haz clic en una captura para añadirla al lienzo.</value></data>
   <data name="CollageBufferEmpty" xml:space="preserve"><value>Tu próxima captura copiada, guardada o añadida aparecerá aquí.</value></data>
@@ -242,4 +242,31 @@
   <data name="CollageCaptureDimensions" xml:space="preserve"><value>{0} · {1} × {2} px</value></data>
   <data name="CollageExportComplete" xml:space="preserve"><value>Exportación completada. Puedes seguir editando.</value></data>
   <data name="CollageBufferFull" xml:space="preserve"><value>La captura se ha copiado o guardado, pero el buffer de sesión está lleno (64 millones de píxeles). No se ha podido conservar para el collage. Reinicia Zass para liberar la sesión.</value></data>
+  <data name="CollageStamps" xml:space="preserve"><value>Sellos</value></data>
+  <data name="CollageSteps" xml:space="preserve"><value>Pasos</value></data>
+  <data name="CollageLabels" xml:space="preserve"><value>Rótulos</value></data>
+  <data name="CollageBold" xml:space="preserve"><value>Negrita</value></data>
+  <data name="CollageItalic" xml:space="preserve"><value>Cursiva</value></data>
+  <data name="CollageTextOutline" xml:space="preserve"><value>Contorno blanco</value></data>
+  <data name="CollageDashed" xml:space="preserve"><value>Trazo discontinuo</value></data>
+  <data name="CollageOpacity" xml:space="preserve"><value>Opacidad</value></data>
+  <data name="CollageFont" xml:space="preserve"><value>Fuente</value></data>
+  <data name="CollageObjectSize" xml:space="preserve"><value>Tamaño</value></data>
+  <data name="StampCheck" xml:space="preserve"><value>✓ Correcto</value></data>
+  <data name="StampCross" xml:space="preserve"><value>× Error</value></data>
+  <data name="StampProhibited" xml:space="preserve"><value>⊘ Prohibido</value></data>
+  <data name="StampPlus" xml:space="preserve"><value>+ Más</value></data>
+  <data name="StampMinus" xml:space="preserve"><value>− Menos</value></data>
+  <data name="StampExclamation" xml:space="preserve"><value>! Atención</value></data>
+  <data name="StampQuestion" xml:space="preserve"><value>? Pregunta</value></data>
+  <data name="StepCircle" xml:space="preserve"><value>Círculo</value></data>
+  <data name="StepTeardrop" xml:space="preserve"><value>Lágrima lateral</value></data>
+  <data name="LabelBox" xml:space="preserve"><value>Cuadro blanco con borde</value></data>
+  <data name="LabelSpeech" xml:space="preserve"><value>Bocadillo de cómic</value></data>
+  <data name="ArrowDouble" xml:space="preserve"><value>Doble punta</value></data>
+  <data name="CollageZoomIn" xml:space="preserve"><value>Acercar</value></data>
+  <data name="CollageZoomOut" xml:space="preserve"><value>Alejar</value></data>
+  <data name="CollageZoomActual" xml:space="preserve"><value>100%</value></data>
+  <data name="CollageZoomFit" xml:space="preserve"><value>Ajustar</value></data>
+  <data name="CollageZoomHelp" xml:space="preserve"><value>Ctrl + rueda del ratón</value></data>
 </root>

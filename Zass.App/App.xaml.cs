@@ -118,9 +118,7 @@ public partial class App : Application
         {
             if (revealCollage)
             {
-                _collageWindow!.Hide();
-                // Let Windows repaint the underlying application before freezing the screen.
-                await Task.Delay(150);
+                await _collageWindow!.HideForCaptureAsync();
             }
             CapturedImage capture = _captureService.CaptureActiveMonitor();
             var options = new OverlayOptions(

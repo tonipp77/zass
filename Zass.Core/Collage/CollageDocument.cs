@@ -5,11 +5,21 @@ using Zass.Interop;
 namespace Zass.Core.Collage;
 
 /// <summary>A crop at its original resolution, positioned in physical pixels.</summary>
-public enum CollageDecorationKind { CurvedArrow, StraightArrow, ElbowArrow, Text }
+public enum CollageDecorationKind { CurvedArrow, StraightArrow, ElbowArrow, Text, Stamp, Step, Label }
 
 /// <summary>Immutable geometry relative to the item's bounds; size is in physical pixels.</summary>
+public enum CollageStamp { Check, Cross, Prohibited, Plus, Minus, Exclamation, Question }
+public enum CollageBadgeShape { Circle, Teardrop }
+public enum CollageLabelShape { Box, Speech }
+public enum CollageArrowTip { Filled, Open, Double }
+
 public sealed record CollageDecoration(CollageDecorationKind Kind, PhysicalPoint From,
-    PhysicalPoint To, ArgbColor Color, double Size, string Text = "");
+    PhysicalPoint To, ArgbColor Color, double Size, string Text = "",
+    bool HasShadow = false, double Opacity = 1, string FontFamily = "Segoe UI",
+    bool Bold = false, bool Italic = false, bool TextOutline = false,
+    CollageStamp Stamp = CollageStamp.Check, CollageBadgeShape BadgeShape = CollageBadgeShape.Circle,
+    CollageLabelShape LabelShape = CollageLabelShape.Box,
+    CollageArrowTip ArrowTip = CollageArrowTip.Filled, bool Dashed = false);
 
 public sealed record CollageItem(Guid Id, PhysicalRect Bounds, CollageDecoration? Decoration = null);
 
@@ -22,6 +32,9 @@ public sealed class CollageDocument
     private readonly UndoRedoManager _history = new();
 
     public IReadOnlyList<CollageItem> Items => Array.AsReadOnly(_items);
+
+    /// <summary>Crops below decorations, with stable insertion order within each group.</summary>
+    public IEnumerable<CollageItem> ItemsInPaintOrder => _items.OrderBy(item => item.Decoration is null ? 0 : 1);
     public bool CanUndo => _history.CanUndo;
     public bool CanRedo => _history.CanRedo;
     public PhysicalRect Bounds => GetBounds(_items);

@@ -315,15 +315,51 @@ sin commit ni push hasta confirmación de Toni.
   Plan de pruebas: `Zass-V2-Collage-Pruebas.md`.
   Sellos, pasos, rótulos y nuevos estilos/sombras de collage siguen en V2.3/V2.4.
 
-### ⬜ V2.3 — Sellos, pasos y rótulos en collage
+### ✅ V2.3 — Sellos, pasos y rótulos en collage
 - Sellos: check, aspa, prohibido, +, -, ! y ?.
 - Pasos con número o letra introducidos manualmente; círculo y lágrima lateral.
 - Rótulos con texto libre: rectángulo blanco con borde y bocadillo de cómic.
 - Objetos editables con sombra opcional, historial y exportación coherente.
 
-### ⬜ V2.4 — Texto, flechas y sombras del collage
+### ✅ V2.4 — Texto, flechas y sombras del collage
 - Ampliar texto a partir de la referencia: fuente, tamaño, relleno, contorno y sombra.
 - Ampliar flechas tomando como referencia estilos continuos/discontinuos, puntas,
   anchura y opacidad, conservando los estilos curvo, recto y acodado existentes.
 - Sombra opcional para todos los elementos añadidos; concretar controles de estilo
   con Toni antes de implementar decisiones que los documentos no definan.
+
+
+**Entrega conjunta V2.3/V2.4 autorizada por Toni:** sellos, pasos, rótulos y estilos
+se implementan en el mismo incremento por petición expresa. Incluye siete sellos;
+pasos circulares/lágrima con contenido manual (hasta cuatro caracteres); rótulos blancos
+con borde o bocadillo; cinco fuentes, negrita/cursiva y contorno blanco para texto;
+puntas rellena/abierta/doble y trazo discontinuo en las tres flechas. Tamaño 8–96,
+opacidad 10–100 % y sombra opcional por anotación. Propiedades aplicadas a nuevos objetos.
+
+Compilación aislada en `dist/v2-tools`, 130 tests unitarios y comprobaciones WPF de
+88 variantes, límites, previsualización/exportación e historial. Sin dependencias nuevas.
+Plan manual: `Zass-V2-Herramientas-Pruebas.md`. Validado por Toni; commit, push y merges a dev/main autorizados.
+
+
+Correcciones tras pruebas de Toni: contorno blanco detrás del relleno para conservar
+el color en texto regular; selección automática tras crear objetos o insertar capturas;
+movimiento fino con flechas (1 px) y Mayús+flechas (10 px); zoom visible encima del lienzo
+con Acercar/Alejar/100 %/Ajustar y Ctrl+rueda. Validado por Toni.
+Compilación actual: `dist/v2-fixes`. Comprobación WPF ampliada con regresión del relleno,
+selección automática, movimiento por teclado e invariancia del modelo al cambiar zoom.
+
+
+Corrección de capas solicitada por Toni: capturas siempre debajo de anotaciones,
+con orden estable dentro de cada grupo y sin alterar el historial cronológico.
+Vista/exportación usan el mismo orden. Nueva compilación: `dist/v2-layers`.
+Validado por Toni.
+
+
+Corrección de captura desde collage: la espera fija de 150 ms se sustituye por
+`HideForCaptureAsync`. Desactiva transiciones DWM solo en esta ventana, cierra el popup
+de color, oculta, cede al Dispatcher y espera `DwmFlush` fuera del hilo de UI. La interop
+está aislada en `WindowComposition`; errores HRESULT se propagan al aviso de captura
+existente y recuperan el collage. No modifica la configuración de animaciones del sistema.
+DwmFlush sincroniza actualizaciones pendientes de esta aplicación, no todo el escritorio.
+Corrección de rastros validada por Toni.
+Compilación final: `dist/v2-capture-clean`; 131 tests y comprobaciones WPF correctos.
