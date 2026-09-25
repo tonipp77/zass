@@ -4,13 +4,16 @@ using Zass.Core.Export;
 namespace Zass.App.Overlay;
 
 /// <summary>
-/// Per-capture defaults handed to the overlay from persisted settings (RF-21): the
-/// initial annotation style (carried over from the previous session), the format
-/// pre-selected in the Save dialog, and the JPEG quality used when saving as JPG.
+/// Capture style carried over from the previous overlay, plus persisted save
+/// preferences. Color, stroke thickness, and text size follow RF-21.
 /// </summary>
 public sealed record OverlayOptions(
     ArgbColor InitialColor,
     double InitialThickness,
     double InitialTextSize,
+    double InitialArrowThickness,
+    double InitialPixelBlockSize,
+    bool InitialShadow,
+    ArrowStyle InitialArrowStyle,
     ImageExportFormat DefaultFormat,
     int JpegQuality);

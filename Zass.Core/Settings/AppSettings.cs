@@ -26,8 +26,10 @@ public sealed class AppSettings
     public const double MaxTextSize = 72.0;
 
     public const int DefaultJpegQuality = 90;
-    public const double DefaultThickness = 3.0;
-    public const double DefaultTextSize = 18.0;
+    public const double DefaultThickness = 5.0;
+    public const double DefaultTextSize = 20.0;
+    private const double PriorDefaultThickness = 3.0;
+    private const double PriorDefaultTextSize = 18.0;
 
     /// <summary>The fixed v1 capture shortcut. Reconfiguration (RF-2) is deferred.</summary>
     public const string DefaultHotkey = "Ctrl+Shift+S";
@@ -56,6 +58,9 @@ public sealed class AppSettings
     /// <summary>Last text size, in physical pixels.</summary>
     public double LastTextSize { get; set; } = DefaultTextSize;
 
+    /// <summary>Tracks the one-time migration of capture style defaults.</summary>
+    public int CaptureStyleDefaultsVersion { get; set; } = 1;
+
     /// <summary>Packs an <see cref="ArgbColor"/> into a 0xAARRGGBB integer.</summary>
     public static uint PackColor(ArgbColor c) =>
         ((uint)c.A << 24) | ((uint)c.R << 16) | ((uint)c.G << 8) | c.B;
@@ -81,6 +86,21 @@ public sealed class AppSettings
     /// </summary>
     public void Normalize()
     {
+        if (CaptureStyleDefaultsVersion < 1)
+        {
+            if (LastThickness == PriorDefaultThickness)
+            {
+                LastThickness = DefaultThickness;
+            }
+
+            if (LastTextSize == PriorDefaultTextSize)
+            {
+                LastTextSize = DefaultTextSize;
+            }
+
+            CaptureStyleDefaultsVersion = 1;
+        }
+
         if (!Enum.IsDefined(Language))
         {
             Language = LanguageOption.System;

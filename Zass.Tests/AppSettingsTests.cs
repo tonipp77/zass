@@ -19,6 +19,8 @@ public class AppSettingsTests
         Assert.Equal(ArgbColor.Red, settings.LastColor);
         Assert.Equal(AppSettings.DefaultThickness, settings.LastThickness);
         Assert.Equal(AppSettings.DefaultTextSize, settings.LastTextSize);
+        Assert.Equal(5, settings.LastThickness);
+        Assert.Equal(20, settings.LastTextSize);
     }
 
     [Theory]
