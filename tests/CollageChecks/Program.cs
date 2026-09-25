@@ -5,7 +5,9 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Zass.App.Views;
+using Zass.App.Overlay;
 using Zass.Core.Annotations;
+using Zass.Core.Capture;
 using Zass.Core.Collage;
 using Zass.Core.Export;
 using Zass.Interop;
@@ -55,6 +57,46 @@ internal static class Program
     }
     private static T Field<T>(object target, string name) => (T)target.GetType().GetField(name, BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(target)!;
     private static void Click(CollageWindow window, string name) => ((ButtonBase)window.FindName(name)).RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+
+    private static void CheckCaptureStyleCarryover()
+    {
+        var capture = new CapturedImage(new CapturedBitmapData(32, 32, new byte[32 * 32 * 4]),
+            new PhysicalRect(0, 0, 32, 32), 96, 96);
+        var options = new OverlayOptions(ArgbColor.Red, 5, 20, 10, 8, true,
+            ArrowStyle.Tapered, ImageExportFormat.Png, 90);
+        var first = new OverlayWindow(capture, options);
+        Slider thickness = (Slider)first.FindName("ThicknessSlider");
+        Check(first.LastThickness == 5 && first.LastTextSize == 20, "Capture defaults survive XAML initialization");
+        Check(first.LastArrowThickness == 10 && first.LastPixelBlockSize == 8, "Arrow and pixel defaults");
+        Check(first.LastShadow && first.LastArrowStyle == ArrowStyle.Tapered, "Shadow and arrow style defaults");
+        ((ButtonBase)first.FindName("ArrowToolButton")).RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+        Check(thickness.Value == 10, "Arrow shows its own width");
+        thickness.Value = 12;
+        ((ButtonBase)first.FindName("LineToolButton")).RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+        Check(thickness.Value == 5, "Line retains its independent width");
+        thickness.Value = 7;
+        ((Slider)first.FindName("TextSizeSlider")).Value = 26;
+        ((Slider)first.FindName("PixelSizeSlider")).Value = 12;
+        ((CheckBox)first.FindName("ShadowCheckBox")).IsChecked = false;
+        ((ComboBox)first.FindName("ArrowStyleCombo")).SelectedIndex = (int)ArrowStyle.Open;
+
+        var next = new OverlayWindow(capture, options with
+        {
+            InitialThickness = first.LastThickness,
+            InitialTextSize = first.LastTextSize,
+            InitialArrowThickness = first.LastArrowThickness,
+            InitialPixelBlockSize = first.LastPixelBlockSize,
+            InitialShadow = first.LastShadow,
+            InitialArrowStyle = first.LastArrowStyle,
+        });
+        Check(next.LastThickness == 7 && next.LastTextSize == 26, "Custom sizes survive the next overlay initialization");
+        Check(next.LastArrowThickness == 12 && next.LastPixelBlockSize == 12, "Arrow and pixel sizes carry over");
+        Check(!next.LastShadow && next.LastArrowStyle == ArrowStyle.Open, "Shadow and arrow style carry over");
+        ((ButtonBase)next.FindName("ArrowToolButton")).RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+        Check(((Slider)next.FindName("ThicknessSlider")).Value == 12, "Carried arrow width is shown");
+        next.Close();
+        first.Close();
+    }
     [STAThread]
     private static void Main()
     {
@@ -89,6 +131,7 @@ internal static class Program
 
     private static void Run()
     {
+        CheckCaptureStyleCarryover();
         CheckLayerOrder();
         int count = 0;
         var template = new CollageDecoration(CollageDecorationKind.Text, new PhysicalPoint(60,60), new PhysicalPoint(240,170),
@@ -148,6 +191,6 @@ internal static class Program
             Check(root.DesiredSize.Width<=size.Width && root.DesiredSize.Height<=size.Height,"Layout fits");
         }
         window.CloseForShutdown(); Check(strip.Children.Count==0,"Shutdown releases captures");
-        Console.WriteLine($"PASS: {count} style variants; preview/export equality, bounds, history, editor and buffer checks.");
+        Console.WriteLine($"PASS: {count} style variants; capture style carryover, preview/export equality, bounds, history, editor and buffer checks.");
     }
 }

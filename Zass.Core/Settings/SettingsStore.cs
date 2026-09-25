@@ -49,6 +49,14 @@ public sealed class SettingsStore
             string json = File.ReadAllText(_path);
             AppSettings settings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions)
                 ?? new AppSettings();
+            using (JsonDocument document = JsonDocument.Parse(json))
+            {
+                if (document.RootElement.ValueKind == JsonValueKind.Object &&
+                    !document.RootElement.TryGetProperty(nameof(AppSettings.CaptureStyleDefaultsVersion), out _))
+                {
+                    settings.CaptureStyleDefaultsVersion = 0;
+                }
+            }
             settings.Normalize();
             return settings;
         }

@@ -86,6 +86,32 @@ public class SettingsStoreTests : IDisposable
     }
 
     [Fact]
+    public void Load_MigratesPriorDefaultsWithoutChangingCustomStyles()
+    {
+        Directory.CreateDirectory(_dir);
+        File.WriteAllText(_path, "{ \"LastThickness\": 3, \"LastTextSize\": 18 }");
+        var store = new SettingsStore(_path);
+
+        AppSettings settings = store.Load();
+
+        Assert.Equal(5, settings.LastThickness);
+        Assert.Equal(20, settings.LastTextSize);
+        Assert.Equal(1, settings.CaptureStyleDefaultsVersion);
+
+        settings.LastThickness = 3;
+        settings.LastTextSize = 18;
+        store.Save(settings);
+        AppSettings reloaded = store.Load();
+        Assert.Equal(3, reloaded.LastThickness);
+        Assert.Equal(18, reloaded.LastTextSize);
+
+        File.WriteAllText(_path, "{ \"LastThickness\": 9, \"LastTextSize\": 30 }");
+        AppSettings custom = store.Load();
+        Assert.Equal(9, custom.LastThickness);
+        Assert.Equal(30, custom.LastTextSize);
+    }
+
+    [Fact]
     public void Load_CorruptFile_ReturnsDefaultsWithoutThrowing()
     {
         Directory.CreateDirectory(_dir);

@@ -9,6 +9,7 @@ using Zass.App.Overlay;
 using Zass.App.Resources;
 using Zass.App.Startup;
 using Zass.App.Views;
+using Zass.Core.Annotations;
 using Zass.Core.Capture;
 using Zass.Core.Hotkeys;
 using Zass.Core.Settings;
@@ -31,6 +32,10 @@ public partial class App : Application
     private CollageWindow? _collageWindow;
     private bool _captureStarting;
     private AppSettings _settings = new();
+    private double _arrowThickness = 10;
+    private double _pixelBlockSize = 8;
+    private bool _annotationShadow = true;
+    private ArrowStyle _arrowStyle = ArrowStyle.Tapered;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -125,6 +130,10 @@ public partial class App : Application
                 _settings.LastColor,
                 _settings.LastThickness,
                 _settings.LastTextSize,
+                _arrowThickness,
+                _pixelBlockSize,
+                _annotationShadow,
+                _arrowStyle,
                 _settings.DefaultFormat,
                 _settings.JpegQuality);
 
@@ -171,14 +180,18 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Persists the color/thickness/text size last used in the overlay so the next
-    /// capture starts from them (RF-21). A failed write is logged, not fatal.
+    /// Remembers capture styles for the next overlay. Color, stroke thickness and
+    /// text size also retain their existing disk persistence (RF-21).
     /// </summary>
     private void RememberAnnotationStyle(OverlayWindow overlay)
     {
         _settings.LastColor = overlay.LastColor;
         _settings.LastThickness = overlay.LastThickness;
         _settings.LastTextSize = overlay.LastTextSize;
+        _arrowThickness = overlay.LastArrowThickness;
+        _pixelBlockSize = overlay.LastPixelBlockSize;
+        _annotationShadow = overlay.LastShadow;
+        _arrowStyle = overlay.LastArrowStyle;
 
         try
         {

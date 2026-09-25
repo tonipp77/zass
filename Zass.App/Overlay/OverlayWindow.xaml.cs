@@ -53,11 +53,13 @@ public partial class OverlayWindow : Window
 
     private OverlayTool _tool = OverlayTool.Pointer;
 
-    // Active annotation style; seeded from the persisted settings (RF-21) and updated
-    // by the toolbar. The final values are read back on close to remember them.
+    // Active annotation style. Stroke and arrow widths are independent so each tool
+    // starts with its own default and retains changes across captures.
     private ArgbColor _currentColor;
     private double _currentThickness;
+    private double _currentArrowThickness;
     private double _currentTextSize;
+    private bool _toolOptionsReady;
 
     // Export defaults from settings: format pre-selected in the Save dialog and the
     // JPEG quality used when saving as JPG.
@@ -82,6 +84,7 @@ public partial class OverlayWindow : Window
 
         _currentColor = options.InitialColor;
         _currentThickness = options.InitialThickness;
+        _currentArrowThickness = options.InitialArrowThickness;
         _currentTextSize = options.InitialTextSize;
         _defaultFormat = options.DefaultFormat;
         _jpegQuality = options.JpegQuality;
@@ -110,9 +113,11 @@ public partial class OverlayWindow : Window
         CloseButton.ToolTip = Strings.ToolClose;
         HintText.Text = Strings.OverlayHint;
         ShadowCheckBox.Content = Strings.AnnotationShadow;
+        ShadowCheckBox.IsChecked = options.InitialShadow;
         ArrowStyleCombo.ItemsSource = new[] { Strings.ArrowTriangular, Strings.ArrowOpen, Strings.ArrowTapered };
-        ArrowStyleCombo.SelectedIndex = 0;
+        ArrowStyleCombo.SelectedIndex = (int)options.InitialArrowStyle;
         ArrowStyleCombo.ToolTip = Strings.ArrowStyleLabel;
+        PixelSizeSlider.Value = options.InitialPixelBlockSize;
         PointerToolButton.IsChecked = true;
 
         InitializeToolOptions();
@@ -128,8 +133,16 @@ public partial class OverlayWindow : Window
     /// <summary>The stroke thickness in effect when the overlay closed (RF-21).</summary>
     public double LastThickness => _currentThickness;
 
+    public double LastArrowThickness => _currentArrowThickness;
+
     /// <summary>The text size in effect when the overlay closed (RF-21).</summary>
     public double LastTextSize => _currentTextSize;
+
+    public double LastPixelBlockSize => PixelSizeSlider.Value;
+
+    public bool LastShadow => ShadowCheckBox.IsChecked == true;
+
+    public ArrowStyle LastArrowStyle => (ArrowStyle)ArrowStyleCombo.SelectedIndex;
 
     public event Action<System.Windows.Media.Imaging.BitmapSource>? AddToCollageRequested;
     public event Action<System.Windows.Media.Imaging.BitmapSource>? CaptureExported;
@@ -208,6 +221,12 @@ public partial class OverlayWindow : Window
     private void SetTool(OverlayTool tool)
     {
         _tool = tool;
+        if (tool is OverlayTool.Arrow or OverlayTool.Line or OverlayTool.Rectangle or OverlayTool.Freehand)
+        {
+            double thickness = tool == OverlayTool.Arrow ? _currentArrowThickness : _currentThickness;
+            ThicknessSlider.Value = thickness;
+            ThicknessValue.Text = FormatValue(thickness);
+        }
         PointerToolButton.IsChecked = tool == OverlayTool.Pointer;
         TextToolButton.IsChecked = tool == OverlayTool.Text;
         ArrowToolButton.IsChecked = tool == OverlayTool.Arrow;
@@ -250,7 +269,7 @@ public partial class OverlayWindow : Window
         ColorPickerControl.SelectedColorChanged += OnPickerColorChanged;
         ColorPickerControl.ColorCommitted += (_, _) => ColorPopup.IsOpen = false;
 
-        // Seed the sliders from the persisted style (RF-21). Setting a value that
+        // Seed the sliders from the current style (RF-21). Setting a value that
         // differs from the XAML default fires ValueChanged and refreshes its caption;
         // seed the captions explicitly to also cover the value-equals-default case.
         ThicknessSlider.Value = _currentThickness;
@@ -258,6 +277,7 @@ public partial class OverlayWindow : Window
         ThicknessValue.Text = FormatValue(_currentThickness);
         TextSizeValue.Text = FormatValue(_currentTextSize);
 
+        _toolOptionsReady = true;
         UpdateToolOptions();
     }
 
@@ -308,7 +328,16 @@ public partial class OverlayWindow : Window
 
     private void OnThicknessChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
-        _currentThickness = e.NewValue;
+        if (!_toolOptionsReady) return;
+
+        if (_tool == OverlayTool.Arrow)
+        {
+            _currentArrowThickness = e.NewValue;
+        }
+        else
+        {
+            _currentThickness = e.NewValue;
+        }
         if (ThicknessValue is not null)
         {
             ThicknessValue.Text = FormatValue(e.NewValue);
@@ -317,6 +346,8 @@ public partial class OverlayWindow : Window
 
     private void OnTextSizeChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
+        if (!_toolOptionsReady) return;
+
         _currentTextSize = e.NewValue;
         if (TextSizeValue is not null)
         {
@@ -371,7 +402,8 @@ public partial class OverlayWindow : Window
             _mode = DragMode.DrawingAnnotation;
             (int sx, int sy) = ClampToBounds(px, py);
             _annotations.BeginDraft(_tool, new PhysicalPoint(sx, sy), _currentColor,
-                _tool == OverlayTool.Pixelation ? PixelSizeSlider.Value : _currentThickness,
+                _tool == OverlayTool.Pixelation ? PixelSizeSlider.Value :
+                    _tool == OverlayTool.Arrow ? _currentArrowThickness : _currentThickness,
                 ShadowCheckBox.IsChecked == true, (ArrowStyle)Math.Max(0, ArrowStyleCombo.SelectedIndex));
             CaptureMouse();
             return;

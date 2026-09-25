@@ -363,3 +363,20 @@ existente y recuperan el collage. No modifica la configuración de animaciones d
 DwmFlush sincroniza actualizaciones pendientes de esta aplicación, no todo el escritorio.
 Corrección de rastros validada por Toni.
 Compilación final: `dist/v2-capture-clean`; 131 tests y comprobaciones WPF correctos.
+
+### ✅ Ajustes predeterminados del overlay de recorte
+
+- Solicitud de Toni: sombra activada para las anotaciones compatibles; texto 20 px;
+  flecha 10 px y estilo Cuerpo afinado; línea, dibujo libre y rectángulo 5 px;
+  pixelado con bloques de 8 px. No afecta al editor de collage.
+- Los cambios de sombra, flecha y pixelado se conservan entre recortes durante la
+  ejecución de Zass. Color, grosor general y tamaño de texto mantienen la persistencia
+  entre ejecuciones exigida por RF-21. Flecha y los otros trazos conservan grosores
+  independientes. Los antiguos valores guardados 3 px/18 px se migran una sola vez a
+  5 px/20 px; otras elecciones guardadas se respetan. Los eventos de los deslizadores
+  durante la construcción del overlay no sobrescriben los valores recibidos.
+- Verificación automática: compilación sin avisos, 132 pruebas unitarias y comprobación
+  WPF de valores iniciales y conservación entre overlays, además de las 88 variantes
+  de collage existentes.
+- Estado: validado manualmente por Toni el 2026-09-25. Commit y push a `dev`,
+  seguidos de merge a `main`, autorizados expresamente.
