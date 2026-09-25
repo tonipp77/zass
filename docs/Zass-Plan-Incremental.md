@@ -380,3 +380,14 @@ Compilación final: `dist/v2-capture-clean`; 131 tests y comprobaciones WPF corr
   de collage existentes.
 - Estado: validado manualmente por Toni el 2026-09-25. Commit y push a `dev`,
   seguidos de merge a `main`, autorizados expresamente.
+
+### 🔄 Preparación de la publicación v2.0.1
+
+- Se alinea la versión del ensamblado con `v2.0.1` y se incorporan al repositorio
+  el script de publicación y el instalador Inno Setup ya usados localmente.
+- `build/publish.ps1` verifica que la versión solicitada coincide con el proyecto y
+  genera, además de los archivos versionados, los nombres estables de los dos recursos
+  publicados en GitHub. `dist/` queda excluido de Git.
+- Verificación automática: compilación Release sin avisos, 132 pruebas unitarias,
+  comprobaciones WPF y generación correcta de portable e instalador.
+- Estado: preparación en curso; la publicación de la GitHub Release corresponde a Toni.
